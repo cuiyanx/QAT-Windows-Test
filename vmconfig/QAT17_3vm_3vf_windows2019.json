@@ -1,0 +1,49 @@
+{
+    "TestVms" : [
+    {
+        "Name": "vm1",
+        "HyperVGeneration": 1,
+        "VmType": "windows_server_2019_17763",
+        "Vcpu": 8,
+        "VMemory": "16GiB",
+        "VNetwork": [
+            "Mgmt"
+        ],
+        "QatVf": [
+            [0, 0],
+            [1, 0],
+            [2, 0]
+        ]
+    },
+    {
+        "Name": "vm2",
+        "HyperVGeneration": 1,
+        "VmType": "windows_server_2019_17763",
+        "Vcpu": 8,
+        "VMemory": "16GiB",
+        "VNetwork": [
+            "Mgmt"
+        ],
+        "QatVf": [
+            [0, 1],
+            [1, 1],
+            [2, 1]
+        ]
+    },
+    {
+        "Name": "vm3",
+        "HyperVGeneration": 1,
+        "VmType": "windows_server_2019_17763",
+        "Vcpu": 8,
+        "VMemory": "16GiB",
+        "VNetwork": [
+            "Mgmt"
+        ],
+        "QatVf": [
+            [0, 2],
+            [1, 2],
+            [2, 2]
+        ]
+    }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "TestVms" : [
+    {
+        "Name": "vm1",
+        "HyperVGeneration": 1,
+        "VmType": "windows_server_2022_20348",
+        "Vcpu": 4,
+        "VMemory": "16GiB",
+        "VNetwork": [
+            "Mgmt"
+        ],
+        "QatVf": [
+            [0, 1]
+        ]
+    }
+    ]
+}

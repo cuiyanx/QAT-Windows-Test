@@ -1,0 +1,11 @@
+load /usr/local/lib/libusdm_drv_s.so
+load /usr/local/lib/libqat_s.so
+load ./cpa_sample_code_s.so
+load ./stv_test_code_s.so
+
+qaeMemInit();
+icp_sal_userStart("SSL")
+runDcTestPerf(3,0,0,1,1,1,65536,1,100)
+icp_sal_userStop()
+qaeMemDestroy();
+
