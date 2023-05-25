@@ -56,5 +56,6 @@ $ .\Win_Single_test.ps1 -BertaResultPath <Path of test result> -DriverPath <Path
 -DriverPath           The path of QAT driver.
 -Iteration            [option] '1', the iteration of test case.
 -ResultFile           [option] 'result.log', the file of test result.
+-InitVM               [option] '$true', initialize or not the VM for HVMode.
 ```
 

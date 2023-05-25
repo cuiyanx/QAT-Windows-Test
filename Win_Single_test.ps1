@@ -10,6 +10,8 @@ Param(
 
     [int]$Iteration = 1,
 
+    [bool]$InitVM = $true,
+
     [string]$ResultFile = "result.log"
 )
 
@@ -18,7 +20,7 @@ Set-Variable -Name "QATTESTPATH" -Value $TestSuitePath -Scope global
 Import-Module "$QATTESTPATH\\lib\\WinBase.psm1" -Force -DisableNameChecking
 
 $RunOnLocal = 1
-$InitVM = 1
+$InitVMInt = ($InitVM) ? 1 : 0
 try {
     For ($i = 1; $i -le $Iteration; $i++) {
         Win-DebugTimestamp -output (
@@ -48,15 +50,15 @@ try {
 
                 if ($TestName -match "WTW") {
                     $TestSuiteName = "{0}\\WTW_Parcomp_Base_Parameter.ps1" -f $QATTESTPATH
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
                         $TestName,
                         $RunOnLocal,
-                        $InitVM
+                        $InitVMInt
                     Invoke-Expression $runCommand
-                    if ($InitVM) {$InitVM = 0}
+                    if ($InitVMInt) {$InitVMInt = 0}
                 }
             }
 
@@ -88,15 +90,15 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance_Parameter.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
                         $TestName,
                         $RunOnLocal,
-                        $InitVM
+                        $InitVMInt
                     Invoke-Expression $runCommand
-                    if ($InitVM) {$InitVM = 0}
+                    if ($InitVMInt) {$InitVMInt = 0}
                 }
             }
 
@@ -128,15 +130,15 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
                         $TestName,
                         $RunOnLocal,
-                        $InitVM
+                        $InitVMInt
                     Invoke-Expression $runCommand
-                    if ($InitVM) {$InitVM = 0}
+                    if ($InitVMInt) {$InitVMInt = 0}
                 }
             }
 
@@ -168,15 +170,15 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_SWFallback.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
                         $TestName,
                         $RunOnLocal,
-                        $InitVM
+                        $InitVMInt
                     Invoke-Expression $runCommand
-                    if ($InitVM) {$InitVM = 0}
+                    if ($InitVMInt) {$InitVMInt = 0}
                 }
             }
         }
