@@ -24,10 +24,15 @@ VF VF-driver-path\\QAT2.0.W.2.0.0-00538
 ### Driver certificate: `qat_cert.cer`
 ### Driver `zip` file: `QAT2.0.W.2.x.x-xxxxx.zip`
 
-## Run test suite
+## Run test suite or single test case
 ```sh
 $ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -DriverPath <Path of QAT driver>
 ```
+or
+```sh
+$ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -DriverPath <Path of QAT driver> -TestName <Name of test case>
+```
+
 ```shell
 -BertaResultPath      The path of test result.
 -RunOnLocal           [option] '$false', run this test suite on the local PC.
@@ -41,7 +46,7 @@ $ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -Driv
 -VMVFOSConfigs        [option] '$null', specify the configuration of the VM for HVMode.
 ```
 
-## Run single test case
+## Run single test case with multiple rounds
 ```sh
 $ .\Win_Single_test.ps1 -BertaResultPath <Path of test result> -DriverPath <Path of QAT driver> -TestName <Name of test case> -Iteration <Iteration of test case>
 ```
@@ -52,3 +57,4 @@ $ .\Win_Single_test.ps1 -BertaResultPath <Path of test result> -DriverPath <Path
 -Iteration            [option] '1', the iteration of test case.
 -ResultFile           [option] 'result.log', the file of test result.
 ```
+
