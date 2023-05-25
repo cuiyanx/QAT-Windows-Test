@@ -824,29 +824,29 @@ function WBase-AnalyzeTestCaseName
 
     $ReturnValue = [hashtable] @{
         Parcomp = [hashtable] @{
-            Provider = @()
-            Chunk = @()
-            Block = @()
-            CompressType = @()
-            Level = @()
-            CompressionType = @()
-            Iteration = @()
-            Thread = @()
-            TestFileType = @()
-            TestFileSize = @()
+            Provider = @("qat")
+            Chunk = @(64)
+            Block = @(4096)
+            CompressType = @("Compress")
+            Level = @(1)
+            CompressionType = @("dynamic")
+            Iteration = @(100)
+            Thread = @(8)
+            TestFileType = @("high")
+            TestFileSize = @(200)
         }
         CNGTest = [hashtable] @{
-            Provider = @()
-            Algo = @()
-            Operation = @()
-            KeyLength = @()
-            Padding = @()
-            Ecccurve = @()
-            Iteration = @()
-            Thread = @()
+            Provider = @("qa")
+            Algo = @("rsa")
+            Operation = @("encrypt")
+            KeyLength = @(4096)
+            Padding = @("pkcs1")
+            Ecccurve = @("nistP256")
+            Iteration = @(10000)
+            Thread = @(1)
         }
         VMVFOS = $null
-        Operation = @()
+        Operation = @("heartbeat")
     }
 
     $AnalyzeTestHVMode = $null
@@ -1062,11 +1062,6 @@ function WBase-AnalyzeTestCaseName
     }
 
     if ($LocationInfo.UQMode) {
-        $CurrentBuildNumber = [int]((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").CurrentBuildNumber)
-        if ($CurrentBuildNumber -lt 25000) {
-            throw ("Not support UQ mode on windows-2022-{0}" -f $CurrentBuildNumber)
-        }
-    }
 
     return $ReturnValue
 }
