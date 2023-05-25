@@ -30,7 +30,7 @@ $ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -Driv
 ```
 or
 ```sh
-$ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -DriverPath <Path of QAT driver> -TestName <Name of test case>
+$ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -DriverPath <Path of QAT driver> -runTestCase <Name of test case>
 ```
 
 ```shell
