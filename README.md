@@ -37,8 +37,8 @@ $ .\<name of powershell script>.ps1 -BertaResultPath <Path of test result> -Driv
 -runTestCase          [option] '$null', run single test case.
 -DriverPath           [option] 'C:\\cy-work\\qat_driver\\', the path of QAT driver.
 -ResultFile           [option] 'result.log', the file of test result.
--InitVM               [option] '$true', Initialize or not the VM for HVMode.
--VMVFOSConfigs        [option] '$null', Specify the configuration of the VM for HVMode.
+-InitVM               [option] '$true', initialize or not the VM for HVMode.
+-VMVFOSConfigs        [option] '$null', specify the configuration of the VM for HVMode.
 ```
 
 ## Run single test case
@@ -49,6 +49,6 @@ $ .\Win_Single_test.ps1 -BertaResultPath <Path of test result> -DriverPath <Path
 -BertaResultPath      The path of test result.
 -TestName             The name of test case.
 -DriverPath           The path of QAT driver.
--Iteration           [option] '1', the iteration of test case.
+-Iteration            [option] '1', the iteration of test case.
 -ResultFile           [option] 'result.log', the file of test result.
 ```
