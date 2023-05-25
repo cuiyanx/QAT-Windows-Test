@@ -1062,6 +1062,11 @@ function WBase-AnalyzeTestCaseName
     }
 
     if ($LocationInfo.UQMode) {
+        $CurrentBuildNumber = [int]((Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\").CurrentBuildNumber)
+        if ($CurrentBuildNumber -lt 25000) {
+            throw ("Not support UQ mode on windows-2022-{0}" -f $CurrentBuildNumber)
+        }
+    }
 
     return $ReturnValue
 }
