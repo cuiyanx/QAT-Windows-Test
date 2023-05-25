@@ -2191,13 +2191,13 @@ function WTW-ParcompSWfallback
     if (!$ReturnValue.result) {
         if ($TestType -eq "heartbeat") {
             Win-DebugTimestamp -output ("Host: Copy tracelog file to 'BertaResultPath'")
-            $HostIcpQatFile = "{0}\\tracelog_IcpQat_{1}_{2}_{3}_Host.log" -f $BertaResultPath,
+            $HostIcpQatFile = "{0}\\tracelog_IcpQat_{1}_{2}_{3}_Host.etl" -f $BertaResultPath,
                                                                              $CompressType,
                                                                              $CompressProvider,
                                                                              $TestType
 
-            if (Test-Path -Path $TraceLogOpts.Host.IcpQat.LogFullPath) {
-                Copy-Item -Path $TraceLogOpts.Host.IcpQat.LogFullPath `
+            if (Test-Path -Path $TraceLogOpts.Host.IcpQat.EtlFullPath) {
+                Copy-Item -Path $TraceLogOpts.Host.IcpQat.EtlFullPath `
                           -Destination $HostIcpQatFile `
                           -Force `
                           -Confirm:$false | out-null
