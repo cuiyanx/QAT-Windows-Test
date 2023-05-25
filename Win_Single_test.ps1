@@ -15,6 +15,7 @@ Param(
 
 $TestSuitePath = Split-Path -Path $PSCommandPath
 Set-Variable -Name "QATTESTPATH" -Value $TestSuitePath -Scope global
+Import-Module "$QATTESTPATH\\lib\\WinBase.psm1" -Force -DisableNameChecking
 
 $RunOnLocal = 1
 $InitVM = 1
