@@ -195,7 +195,7 @@ function Berta-CompressReturnFiles
     $IgnoreList = @(
         "agent_log.txt",
         "job_2_log.txt",
-        "ps.log",
+        "STVTest-ps.log",
         "result.log",
         "results-log.txt"
     )
