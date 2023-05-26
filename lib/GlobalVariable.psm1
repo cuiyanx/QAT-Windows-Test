@@ -77,7 +77,7 @@ $global:TraceLogOpts = [hashtable] @{
         PDBFullPath = "{0}\\TraceLog\\PDB" -f $STVWinPath
         IcpQat = [hashtable] @{
             SessionName = "qatwin_host_icpqat"
-            StartArgs = "-rt -level 5 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
+            StartArgs = "-rt -level 4 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
             PDBFullPath = "{0}\\icp_qat.pdb" -f $LocalPFDriverPath
             PDBCopyPath = "{0}\\TraceLog\\PDB\\icp_qat.pdb" -f $STVWinPath
             EtlFullPath = "{0}\\TraceLog\\TraceLog_icpqat.etl" -f $STVWinPath
@@ -85,7 +85,7 @@ $global:TraceLogOpts = [hashtable] @{
         }
         CfQat = [hashtable] @{
             SessionName = "qatwin_host_cfqat"
-            StartArgs = "-rt -level 5 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
+            StartArgs = "-rt -level 4 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
             PDBFullPath = "{0}\\CfQat.pdb" -f $LocalPFDriverPath
             PDBCopyPath = "{0}\\TraceLog\\PDB\\CfQat.pdb" -f $STVWinPath
             EtlFullPath = "{0}\\TraceLog\\TraceLog_cfqat.etl" -f $STVWinPath
