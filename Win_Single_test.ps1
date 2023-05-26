@@ -50,7 +50,7 @@ try {
 
                 if ($TestName -match "WTW") {
                     $TestSuiteName = "{0}\\WTW_Parcomp_Base_Parameter.ps1" -f $QATTESTPATH
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
@@ -90,7 +90,7 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance_Parameter.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
@@ -130,7 +130,7 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
@@ -170,7 +170,7 @@ try {
                         $TestSuiteName = "{0}\\WTW_Parcomp_SWFallback.ps1" -f $QATTESTPATH
                     }
 
-                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVMInt {5}" -f
+                    $runCommand = "{0} -BertaResultPath {1} -DriverPath {2} -runTestCase {3} -RunOnLocal {4} -InitVM {5}" -f
                         $TestSuiteName,
                         $BertaResultPath,
                         $DriverPath,
