@@ -296,7 +296,10 @@ function HV-CreateVM
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [object]$VMConfig
+        [object]$VMConfig,
+
+        [Parameter(Mandatory=$True)]
+        [string]$VMSwitch
     )
 
     $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $VMConfig.Name)
@@ -355,7 +358,7 @@ function HV-CreateVM
             -MemoryStartupBytes $vMemory `
             -VHDPath $ChildVM `
             -Generation $VMConfig.HyperVGeneration `
-            -SwitchName $VMSwitch_Name
+            -SwitchName $VMSwitch
 
         Set-VM `
             -Name $VMName `
