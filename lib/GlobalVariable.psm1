@@ -7,6 +7,7 @@ if (!$QATTESTPATH) {
 Set-Variable -Name "STVWinPath" -Value "C:\\STV-tmp" -Scope global
 Set-Variable -Name "STVLinuxPath" -Value "/home/administrator/STV-tmp" -Scope global
 Set-Variable -Name "VMSwitch_Name" -Value "STV_VMSwitch" -Scope global
+Set-Variable -Name "VMNetNat_Name" -Value "STV_VMNetNat" -Scope global
 
 $global:sevenZipExe = "{0}\\utils\\7z.exe" -f $QATTESTPATH
 $global:sevenZipDll = "{0}\\lib\\SevenZip.dll" -f $QATTESTPATH

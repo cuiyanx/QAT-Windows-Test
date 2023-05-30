@@ -424,7 +424,7 @@ function HV-VMSwitchCreate
         $VMSwitchType = "External"
     } else {
         $VMSwitchType = "Internal"
-        $VMSwitchIPAddress = "192.168.137.1"
+        $VMSwitchIPAddress = "192.168.100.1"
 
         # Share on Ethernet
         $NetShare = New-Object -ComObject HNetCfg.HNetShare
@@ -437,6 +437,21 @@ function HV-VMSwitchCreate
             } else {
                 $EthernetConfig.DisableSharing()
             }
+        }
+
+        # Create netnat
+        $GetNetNatError = $null
+        $GetNetNat = Get-NetNat `
+            -Name $VMNetNat_Name `
+            -ErrorAction SilentlyContinue `
+            -ErrorVariable GetNetNatError
+
+        if (-not [String]::IsNullOrEmpty($GetNetNatError)) {
+            New-NetNat `
+                -Name $VMNetNat_Name `
+                -InternalIPInterfaceAddressPrefix 192.168.100.0/24 `
+                -Confirm:$false `
+                -ErrorAction Stop | Out-Null
         }
     }
 
@@ -478,7 +493,6 @@ function HV-VMSwitchCreate
                     }
                 }
             } else {
-                $CreateVMSwitchFlag = $false
                 if ($VMSwitchList.length -ge 1) {
                     $GetNetIPAddressError = $null
                     $VMSwitch = Get-NetIPAddress `
@@ -486,45 +500,38 @@ function HV-VMSwitchCreate
                         -ErrorAction SilentlyContinue `
                         -ErrorVariable GetNetIPAddressError
                     if ([String]::IsNullOrEmpty($GetNetIPAddressError)) {
-                        Win-DebugTimestamp -output ("Host: Rename VM switch to {0}" -f $VMSwitch_Name)
+                        Win-DebugTimestamp -output ("Host: Remove VM switch to {0}" -f $VMSwitch_Name)
                         try {
                             $VMSwitchName = ($VMSwitch.InterfaceAlias.Split("(")[1]).Split(")")[0]
-                            Rename-VMSwitch `
+                            Remove-VMSwitch `
                                 -name $VMSwitchName `
-                                -NewName $VMSwitch_Name `
                                 -Confirm:$false `
                                 -ErrorAction Stop | Out-Null
                         } catch {
-                            throw ("Error: Rename VM switch > {0}" -f $VMSwitch_Name)
+                            throw ("Error: Remove VM switch > {0}" -f $VMSwitch_Name)
                         }
-                    } else {
-                        $CreateVMSwitchFlag = $true
                     }
-                } else {
-                    $CreateVMSwitchFlag = $true
                 }
 
-                if ($CreateVMSwitchFlag) {
-                    Win-DebugTimestamp -output ("Host: Create VM switch named {0}" -f $VMSwitch_Name)
-                    try {
-                        # Create VM switch
-                        New-VMSwitch `
-                            -Name $VMSwitch_Name `
-                            -SwitchType $VMSwitchType `
-                            -Confirm:$false `
-                            -ErrorAction Stop | Out-Null
+                Win-DebugTimestamp -output ("Host: Create VM switch named {0}" -f $VMSwitch_Name)
+                try {
+                    # Create VM switch
+                    New-VMSwitch `
+                        -Name $VMSwitch_Name `
+                        -SwitchType $VMSwitchType `
+                        -Confirm:$false `
+                        -ErrorAction Stop | Out-Null
 
-                        # Set IP address for VM switch
-                        $VMSwitchIFAlias = "vEthernet ({0})" -f $VMSwitch_Name
-                        New-NetIPAddress `
-                            -IPAddress $VMSwitchIPAddress `
-                            -InterfaceAlias $VMSwitchIFAlias `
-                            -PrefixLength 24 `
-                            -Confirm:$false `
-                            -ErrorAction Stop | Out-Null
-                    } catch {
-                        throw ("Error: Create VM switch > {0}" -f $VMSwitch_Name)
-                    }
+                    # Set IP address for VM switch
+                    $VMSwitchIFAlias = "vEthernet ({0})" -f $VMSwitch_Name
+                    New-NetIPAddress `
+                        -IPAddress $VMSwitchIPAddress `
+                        -InterfaceAlias $VMSwitchIFAlias `
+                        -PrefixLength 24 `
+                        -Confirm:$false `
+                        -ErrorAction Stop | Out-Null
+                } catch {
+                    throw ("Error: Create VM switch > {0}" -f $VMSwitch_Name)
                 }
             }
         } else {
