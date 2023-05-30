@@ -106,11 +106,14 @@ function WTLCreateVMs
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [Array]$TestVmOpts
+        [Array]$TestVmOpts,
+
+        [Parameter(Mandatory=$True)]
+        [string]$VMSwitch
     )
 
     $TestVmOpts | ForEach-Object {
-        HV-CreateVM -VMConfig $_ | out-null
+        HV-CreateVM -VMConfig $_ -VMSwitch $VMSwitch | out-null
     }
 }
 

@@ -452,7 +452,6 @@ function HV-VMSwitchCreate
             -ErrorVariable GetVMSwitchError
         if ([String]::IsNullOrEmpty($GetVMSwitchError)) {
             Win-DebugTimestamp -output ("Host: Get VM switch(External) named {0}" -f $VMSwitch_Name_External)
-            $ReturnValue = $VMSwitch_Name_External
         } else {
             $HostNetwork =  Get-NetIPAddress | Where-Object {
                 $_.AddressFamily -eq "IPv4" -and $_.IPAddress -ne "127.0.0.1" -and $_.InterfaceAlias -notmatch "vEthernet"
@@ -490,6 +489,8 @@ function HV-VMSwitchCreate
                 throw ("Error: Can not create VM switch, because no network on host")
             }
         }
+
+        $ReturnValue = $VMSwitch_Name_External
     }
 
     return $ReturnValue
