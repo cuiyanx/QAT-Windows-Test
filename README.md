@@ -64,7 +64,8 @@ or
 	-BertaResultPath <Path of test result> `
 	-DriverPath <Path of QAT driver> `
 	-TestName <Name of test case> `
-	-Iteration <Iteration of test case>
+	-Iteration <Iteration of test case> `
+	-InitVM $true
 ```
 ```shell
 -BertaResultPath      The path of test result.
