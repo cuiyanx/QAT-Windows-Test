@@ -553,10 +553,10 @@ function WTL-ENVInit
         WTLRemoveVMs | out-null
 
         # Create new VM switch or rename existing VM switch.
-        HV-VMSwitchCreate | out-null
+        $VMSwitch = HV-VMSwitchCreate
 
         # Create VMs
-        WTLCreateVMs -TestVmOpts $TestVmOpts | out-null
+        WTLCreateVMs -TestVmOpts $TestVmOpts -VMSwitch $VMSwitch | out-null
 
         # Start VMs
         WTLRestartVMs `

@@ -138,10 +138,10 @@ function WTW-ENVInit
         WTWRemoveVMs | out-null
 
         # Create new VM switch or rename existing VM switch.
-        HV-VMSwitchCreate | out-null
+        $VMSwitch = HV-VMSwitchCreate
 
         # Create VMs
-        WTWCreateVMs -TestVmOpts $TestVmOpts | out-null
+        WTWCreateVMs -TestVmOpts $TestVmOpts -VMSwitch $VMSwitch | out-null
 
         # Start VMs
         WTWRestartVMs `
