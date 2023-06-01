@@ -64,11 +64,9 @@ try {
 
             if ($TestName -match "Perf_Parameter") {
                 if ($TestName -match "Host") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WHost_CNGtest_Parameter.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WHost_Parcomp_Performance_Parameter.ps1" -f $QATTESTPATH
                     }
 
@@ -82,11 +80,9 @@ try {
                 }
 
                 if ($TestName -match "WTW") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WTW_CNGtest_Parameter.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance_Parameter.ps1" -f $QATTESTPATH
                     }
 
@@ -104,11 +100,9 @@ try {
 
             if ($TestName -match "Performance") {
                 if ($TestName -match "Host") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WHost_CNGtest_Performance.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WHost_Parcomp_Performance.ps1" -f $QATTESTPATH
                     }
 
@@ -122,11 +116,9 @@ try {
                 }
 
                 if ($TestName -match "WTW") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WTW_CNGtest_Performance.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WTW_Parcomp_Performance.ps1" -f $QATTESTPATH
                     }
 
@@ -144,11 +136,9 @@ try {
 
             if ($TestName -match "Fallback") {
                 if ($TestName -match "Host") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WHost_CNGtest_SWFallback.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WHost_Parcomp_SWFallback.ps1" -f $QATTESTPATH
                     }
 
@@ -162,11 +152,9 @@ try {
                 }
 
                 if ($TestName -match "WTW") {
-                    if ($TestName -match "KeyLength") {
+                    if ($TestName -match "_qa_") {
                         $TestSuiteName = "{0}\\WTW_CNGtest_SWFallback.ps1" -f $QATTESTPATH
-                    }
-
-                    if ($TestName -match "Block") {
+                    } else {
                         $TestSuiteName = "{0}\\WTW_Parcomp_SWFallback.ps1" -f $QATTESTPATH
                     }
 
