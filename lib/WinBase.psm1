@@ -320,8 +320,10 @@ function WBase-STVWinPathInit
 
     # Install PF cert on host: qat_cert.cer
     if ($LocationInfo.IsWin) {
-        UT-DelCertificate -CertFile $Certificate.HostPF -Remote $false | out-null
-        UT-SetCertificate -CertFile $Certificate.HostPF -Remote $false | out-null
+        if (Test-Path -Path $Certificate.HostPF) {
+            UT-DelCertificate -CertFile $Certificate.HostPF -Remote $false | out-null
+            UT-SetCertificate -CertFile $Certificate.HostPF -Remote $false | out-null
+        }
     }
 
     # Create test files

@@ -213,10 +213,12 @@ function WTW-ENVInit
             }
         } -ArgumentList $Certificate | out-null
 
-        Copy-Item `
-            -ToSession $session `
-            -Path $Certificate.HostVF `
-            -Destination $Certificate.Remote
+        if (Test-Path -Path $Certificate.HostVF) {
+            Copy-Item `
+                -ToSession $session `
+                -Path $Certificate.HostVF `
+                -Destination $Certificate.Remote
+        }
 
         # Copy test files
         Foreach ($Type in $TestFileNameArray.Type) {
@@ -338,10 +340,12 @@ function WTW-ENVInit
                 -PSName $PSSessionName `
                 -IsWin $true
 
-            UT-SetCertificate `
-                -CertFile $Certificate.Remote `
-                -Session $Session `
-                -Remote $true
+            if (Test-Path -Path $Certificate.Remote) {
+                UT-SetCertificate `
+                    -CertFile $Certificate.Remote `
+                    -Session $Session `
+                    -Remote $true
+            }
 
             Win-DebugTimestamp -output (
                 "{0}: Install Qat driver on remote windows VM" -f $PSSessionName
