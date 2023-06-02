@@ -371,7 +371,7 @@ function WBase-LocationInfoInit
     # Init location Info
     $LocationInfo.UQMode = $BertaConfig.UQ_mode
     $LocationInfo.TestMode = $BertaConfig.test_mode
-    $LocationInfo.DebugMode = $false
+    $LocationInfo.DebugMode = $BertaConfig.DebugMode
     $LocationInfo.VerifierMode = $BertaConfig.driver_verifier
     $LocationInfo.BertaResultPath = $BertaResultPath
     $LocationInfo.PF.DriverPath = Split-Path -Path $QatDriverFullPath.PF

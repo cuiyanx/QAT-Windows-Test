@@ -298,9 +298,9 @@ $global:ParcompChunk = [System.Array] @(1, 2, 8, 16, 64, 128, 256, 512)
 
 $global:ParcompBlock = [System.Array] @(1024, 2048, 4096, 8192)
 
-$global:ParcompIteration = [System.Array] @(1, 800)
+$global:ParcompIteration = [System.Array] @(1, 200, 800)
 
-$global:ParcompThread = [System.Array] @(1, 64)
+$global:ParcompThread = [System.Array] @(8, 32, 64)
 
 $global:ParcompCompressType = [System.Array] @(
     "Compress",

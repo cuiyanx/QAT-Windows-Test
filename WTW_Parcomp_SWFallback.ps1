@@ -69,7 +69,7 @@ try {
         [System.Array]$ParcompProvider = ("qat", "qatgzip", "qatgzipext")
         [System.Array]$ParcompCompressionType = ("dynamic")
         [System.Array]$ParcompCompressionLevel = (1)
-        [System.Array]$ParcompChunk = (64)
+        [System.Array]$ParcompChunk = (256)
         [System.Array]$ParcompBlock = (4096)
         [System.Array]$ParcompThread = (8)
         [System.Array]$ParcompIteration = (200)

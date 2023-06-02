@@ -50,6 +50,7 @@ or
 -UQMode               [option] '$false', disable and enable the UQ mode.
 -TestMode             [option] '$true', disable and enable the Test mode.
 -VerifierMode         [option] '$true', disable and enable the driver verifier, the default value is `$false` for performance test.
+-DebugMode            [option] '$false', disable and enable the Debug mode.
 -runTestCase          [option] '$null', run single test case.
 -DriverPath           [option] 'C:\\cy-work\\qat_driver\\', the path of QAT driver.
 -ResultFile           [option] 'result.log', the file of test result.
@@ -67,6 +68,7 @@ or
 	-Iteration <Iteration of test case> `
 	-InitVM $true
 ```
+
 ```shell
 -BertaResultPath      The path of test result.
 -TestName             The name of test case.
@@ -74,10 +76,12 @@ or
 -Iteration            [option] '1', the iteration of test case.
 -ResultFile           [option] 'result.log', the file of test result.
 -InitVM               [option] '$true', initialize or not the VM for HVMode.
+-RunOnLocal           [option] '$true', run this test suite on the local PC.
+-DebugMode            [option] '$false', disable and enable the Debug mode.
 ```
 
 
-## Example for name of test case 
+## Example for name of test case
 ### For parcomp
 #### Base test
 `WTW_QAT20_NUQ_3vm_8vf_windows2022_Base_Parameter_qat_Compress_Thread8_Iteration200_Block4096_Chunk64_calgary200_Level1_static`

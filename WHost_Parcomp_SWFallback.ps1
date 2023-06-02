@@ -10,6 +10,8 @@ Param(
 
     [bool]$VerifierMode = $true,
 
+    [bool]$DebugMode = $false,
+
     [string]$runTestCase = $null,
 
     [string]$DriverPath = "C:\\cy-work\\qat_driver\\",
@@ -35,6 +37,7 @@ try {
         $BertaConfig["UQ_mode"] = $UQMode
         $BertaConfig["test_mode"] = $TestMode
         $BertaConfig["driver_verifier"] = $VerifierMode
+        $BertaConfig["DebugMode"] = $DebugMode
         $LocationInfo.WriteLogToConsole = $true
         $LocalBuildPath = $DriverPath
     } else {
@@ -44,6 +47,7 @@ try {
         $BertaConfig["UQ_mode"] = ($out.config.UQ_mode -eq "true") ? $true : $false
         $BertaConfig["test_mode"] = ($out.config.test_mode -eq "true") ? $true : $false
         $BertaConfig["driver_verifier"] = ($out.config.driver_verifier -eq "true") ? $true : $false
+        $BertaConfig["DebugMode"] = $false
 
         $job2 = $out.jobs | Where-Object {$_.job_id -eq 2}
         $LocalBuildPath = $job2.bld_path
@@ -66,7 +70,7 @@ try {
         [System.Array]$AllTestType.Operation = ("heartbeat", "disable")
         [System.Array]$ParcompCompressionType = ("dynamic")
         [System.Array]$ParcompCompressionLevel = (1)
-        [System.Array]$ParcompChunk = (64)
+        [System.Array]$ParcompChunk = (256)
         [System.Array]$ParcompBlock = (4096)
         [System.Array]$ParcompThread = (8)
         [System.Array]$ParcompIteration = (200)
