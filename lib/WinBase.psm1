@@ -1619,11 +1619,11 @@ function WBase-WaitProcessToCompleted
             if ($Remote) {
                 $waitParcompStop = Invoke-Command -Session $Session -ScriptBlock {
                     Param($ProcessName)
-                    wait-process -Name $ProcessName -Timeout 10000 2>&1
+                    wait-process -Name $ProcessName -Timeout 20000 2>&1
                     Start-Sleep -Seconds 5
                 } -ArgumentList $ProcessName
             } else {
-                $waitParcompStop = wait-process -Name $ProcessName -Timeout 10000 2>&1
+                $waitParcompStop = wait-process -Name $ProcessName -Timeout 20000 2>&1
                 Start-Sleep -Seconds 5
             }
 
