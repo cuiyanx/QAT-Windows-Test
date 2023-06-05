@@ -188,7 +188,7 @@ function WTW-ENVInit
             $VMDriverInstallPath.InstallPath
 
         Copy-Item `
-            -ToSession $session `
+            -ToSession $Session `
             -Path $HostQatDriverFullPath `
             -Destination $RemoteQatDriverFullPath
 
@@ -215,7 +215,7 @@ function WTW-ENVInit
 
         if (Test-Path -Path $Certificate.HostVF) {
             Copy-Item `
-                -ToSession $session `
+                -ToSession $Session `
                 -Path $Certificate.HostVF `
                 -Destination $Certificate.Remote
         }
@@ -340,12 +340,10 @@ function WTW-ENVInit
                 -PSName $PSSessionName `
                 -IsWin $true
 
-            if (Test-Path -Path $Certificate.Remote) {
-                UT-SetCertificate `
-                    -CertFile $Certificate.Remote `
-                    -Session $Session `
-                    -Remote $true
-            }
+            UT-SetCertificate `
+                -CertFile $Certificate.Remote `
+                -Session $Session `
+                -Remote $true
 
             Win-DebugTimestamp -output (
                 "{0}: Install Qat driver on remote windows VM" -f $PSSessionName
