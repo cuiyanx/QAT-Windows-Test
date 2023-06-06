@@ -65,6 +65,46 @@ function Berta-ENVInit
     }
 }
 
+function Berta-CopyTestDir
+{
+    $ReturnValue = $true
+
+    $LocalTestDir = "C:\QatTestBerta"
+    $LocalIPProxy = "http://child-prc.intel.com:913"
+    $RemoteTestDir = "https://github.com/cuiyanx/QAT-Windows-Test.git"
+
+    try {
+        if (Test-Path -Path $LocalTestDir) {
+            Remove-Item `
+                -Path $LocalTestDir `
+                -Recurse `
+                -Force `
+                -Confirm:$false `
+                -ErrorAction Stop | out-null
+        }
+
+        Invoke-Command -ScriptBlock {
+            Param($LocalTestDir, $LocalIPProxy, $RemoteTestDir)
+            CD C:\
+            if (-not (Test-Path -Path "C:\.git")) {
+                git init
+            }
+
+            git config --global --unset http.proxy
+            git config --global --unset https.proxy
+
+            git config --global http.proxy $LocalIPProxy
+            git config --global https.proxy $LocalIPProxy
+
+            git clone $RemoteTestDir $LocalTestDir
+        } -ArgumentList $LocalTestDir, $LocalIPProxy, $RemoteTestDir  | out-null
+    } catch {
+        $ReturnValue = $false
+    }
+
+    return $ReturnValue
+}
+
 function Berta-UpdateMainFiles
 {
     $ReturnValue = $false
@@ -78,7 +118,11 @@ function Berta-UpdateMainFiles
             $SourceFile
 
         $SourceMD5 = (certutil -hashfile $BertaSource MD5).split("\n")[1]
-        $DestinationMD5 = (certutil -hashfile $BertaDestination MD5).split("\n")[1]
+        if (Test-Path -Path $BertaDestination) {
+            $DestinationMD5 = (certutil -hashfile $BertaDestination MD5).split("\n")[1]
+        } else {
+            $DestinationMD5 = 0
+        }
 
         if ($SourceMD5 -ne $DestinationMD5) {
             $ReturnValue = $true
@@ -88,41 +132,6 @@ function Berta-UpdateMainFiles
                 -Force `
                 -ErrorAction Stop | out-null
         }
-    }
-
-    return $ReturnValue
-}
-
-function Berta-CopyQATTestFiles
-{
-    $ReturnValue = $false
-
-    if (Test-Path -Path $BertaENVInit.QATTest.SourcePath) {
-        if (Test-Path -Path $BertaENVInit.QATTest.DestinationPath) {
-            Remove-Item `
-                -Path $BertaENVInit.QATTest.DestinationPath `
-                -Recurse `
-                -Force `
-                -Confirm:$false `
-                -ErrorAction Stop
-        }
-
-        $QATTestPathLocal = Split-Path -Parent $BertaENVInit.QATTest.DestinationPath
-        Copy-Item `
-            -Path $BertaENVInit.QATTest.SourcePath `
-            -Destination $QATTestPathLocal `
-            -Recurse `
-            -Force `
-            -Confirm:$false `
-            -ErrorAction Stop
-
-        if (Test-Path -Path $BertaENVInit.QATTest.DestinationPath) {
-            $ReturnValue = $true
-        } else {
-            $ReturnValue = $false
-        }
-    } else {
-        $ReturnValue = $false
     }
 
     return $ReturnValue

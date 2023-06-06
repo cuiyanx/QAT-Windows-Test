@@ -373,7 +373,7 @@ $global:CNGTestThread = [System.Array] @(1, 96)
 # About Berta
 $global:BertaENVInit = [hashtable] @{
     BertaClient = [hashtable] @{
-        SourcePath = "\\10.67.115.211\\mountBertaCTL\\berta"
+        SourcePath = "{0}\\BertaKeyFile" -f $QATTESTPATH
         SourceFiles = [System.Array] @(
             "wrappers\\qatwin.py",
             "wrappers\\qatinstaller.py",
@@ -384,13 +384,9 @@ $global:BertaENVInit = [hashtable] @{
         )
         DestinationPath = "C:\\berta"
     }
-    QATTest = [hashtable] @{
-        SourcePath = "\\10.67.115.211\\mountBertaCTL\\QatTestBerta"
-        DestinationPath = "C:\\QatTestBerta"
-    }
     PSProFile = [hashtable] @{
         FileName = "Microsoft.PowerShell_profile.ps1"
-        SourcePath = "\\10.67.115.211\\mountBertaCTL\\tools"
+        SourcePath = "{0}\\utils" -f $QATTESTPATH
         DestinationPath = "C:\\Users\\Administrator\\Documents\\PowerShell"
     }
     LinuxShell = [hashtable] @{
