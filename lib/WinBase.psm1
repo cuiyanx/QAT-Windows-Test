@@ -1198,8 +1198,13 @@ function WBaseHandleUninstallingResidues
                                       cd $URPath
                                       takeown /f $URName
                                       cacls $URName /P Administrator:F /E
-                                      Rename-Item -Path $URFile -NewName ("{0}.txt" -f $URFile)
-                                      Remove-Item -Path ("{0}.txt" -f $URFile)
+                                      try {
+                                          Remove-Item -Path $URFile
+                                      } catch {
+                                          Rename-Item -Path $URFile -NewName ("{0}.txt" -f $URFile)
+                                          Remove-Item -Path ("{0}.txt" -f $URFile)
+                                      }
+
                                       cd $localPath
                                       } -ArgumentList $URFile | out-null
 
