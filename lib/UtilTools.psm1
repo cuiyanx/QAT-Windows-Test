@@ -30,20 +30,20 @@ function UT-TraceLogStart
             $ReturnValue = [hashtable] @{}
 
             ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-                $checkProcess = Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].List
+                $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].List}
                 if ($checkProcess[0] -match "successfully") {
                     if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
-                        Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].Flush | out-null
+                        Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].Flush} | out-null
                     } else {
-                        Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].Stop | out-null
+                        Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].Stop} | out-null
                         Start-Sleep -Seconds 5
-                        Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].Start | out-null
+                        Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].Start} | out-null
                     }
                 } else {
-                    Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].Start | out-null
+                    Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].Start} | out-null
                 }
 
-                $checkProcess = Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].List
+                $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].List}
                 if ($checkProcess[0] -match "successfully") {
                     if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
                         $ReturnValue[$TraceLogCheckFlag] = $true
@@ -60,21 +60,21 @@ function UT-TraceLogStart
     } else {
         $TraceLogCheckStatus = [hashtable] @{}
         ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].List}
             if ($checkProcess[0] -match "successfully") {
                 if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Flush | out-null
+                    Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].Flush} | out-null
                 } else {
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Stop | out-null
+                    Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].Stop} | out-null
                     Start-Sleep -Seconds 5
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Start | out-null
+                    Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].Start} | out-null
                 }
             } else {
-                Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Start | out-null
+                Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].Start} | out-null
             }
 
             Start-Sleep -Seconds 5
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].List}
             if ($checkProcess[0] -match "successfully") {
                 if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
@@ -134,13 +134,13 @@ function UT-TraceLogStop
             $ReturnValue = [hashtable] @{}
 
             ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-                $checkProcess = Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].List
+                $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].List}
                 if ($checkProcess[0] -match "successfully") {
-                    Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].Stop | out-null
+                    Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].Stop} | out-null
                     Start-Sleep -Seconds 5
                 }
 
-                $checkProcess = Invoke-Expression $TraceLogCommand.Remote[$TraceLogCheckFlag].List
+                $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Remote[$TraceLogCheckFlag].List}
                 if ($checkProcess[0] -match "recognized") {
                     if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
                         $ReturnValue[$TraceLogCheckFlag] = $true
@@ -157,13 +157,13 @@ function UT-TraceLogStop
     } else {
         $TraceLogCheckStatus = [hashtable] @{}
         ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].List}
             if ($checkProcess[0] -match "successfully") {
-                Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Stop | out-null
+                Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].Stop} | out-null
                 Start-Sleep -Seconds 5
             }
 
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = Invoke-Command -ScriptBlock {$TraceLogCommand.Host[$TraceLogCheckFlag].List}
             if ($checkProcess[0] -match "recognized") {
                 if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
@@ -360,7 +360,7 @@ function UT-SetDriverVerifier
                     $DriverVerifierArgs.Delete
             }
 
-            $VerifierOutput = Invoke-Expression $VerifierCommand 2>&1
+            $VerifierOutput = Invoke-Command -ScriptBlock {$VerifierCommand 2>&1}
             $VerifierOutput | ForEach-Object {
                 if ($_ -match $DriverVerifierArgs.SuccessLog) {$VerifierReturn = $true}
                 if ($_ -match $DriverVerifierArgs.NoChangeLog) {$VerifierReturn = $true}
@@ -382,7 +382,7 @@ function UT-SetDriverVerifier
                 $DriverVerifierArgs.Delete
         }
 
-        $VerifierOutput = Invoke-Expression $VerifierCommand 2>&1
+        $VerifierOutput = Invoke-Command -ScriptBlock {$VerifierCommand 2>&1}
         $VerifierOutput | ForEach-Object {
             if ($_ -match $DriverVerifierArgs.SuccessLog) {$ReturnValue = $true}
             if ($_ -match $DriverVerifierArgs.NoChangeLog) {$ReturnValue = $true}
@@ -421,7 +421,7 @@ function UT-CheckDriverVerifier
                 $DriverVerifierArgs.ExePath,
                 $DriverVerifierArgs.List
 
-            $VerifierOutput = Invoke-Expression $VerifierCommand 2>&1
+            $VerifierOutput = Invoke-Command -ScriptBlock {$VerifierCommand 2>&1}
             $VerifierOutput | ForEach-Object {
                 if ($MessageFlag) {
                     if ($_ -match "None") {
@@ -442,7 +442,7 @@ function UT-CheckDriverVerifier
             $DriverVerifierArgs.ExePath,
             $DriverVerifierArgs.List
 
-        $VerifierOutput = Invoke-Expression $VerifierCommand 2>&1
+        $VerifierOutput = Invoke-Command -ScriptBlock {$VerifierCommand 2>&1}
         $VerifierOutput | ForEach-Object {
             if ($MessageFlag) {
                 if ($_ -match "None") {
