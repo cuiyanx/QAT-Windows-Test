@@ -275,6 +275,8 @@ class QatInstaller(BuildInstaller):
         if CopyFlag:
             try:
                 log.info('Copy from Git fail, so change to copy tree')
+                if os.path.exists(self.QATTEST_DST):
+                    shutil.rmtree(self.QATTEST_DST)
                 shutil.copytree(self.QATTEST_SRC, self.QATTEST_DST)
             except:
                 raise
