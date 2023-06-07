@@ -75,6 +75,7 @@ function Berta-CopyTestDir
 
     try {
         if (Test-Path -Path $LocalTestDir) {
+            CD C:\
             Remove-Item `
                 -Path $LocalTestDir `
                 -Recurse `
@@ -97,7 +98,7 @@ function Berta-CopyTestDir
             git config --global https.proxy $LocalIPProxy
 
             git clone $RemoteTestDir $LocalTestDir
-        } -ArgumentList $LocalTestDir, $LocalIPProxy, $RemoteTestDir  | out-null
+        } -ArgumentList $LocalTestDir, $LocalIPProxy, $RemoteTestDir | out-null
     } catch {
         Win-DebugTimestamp -output ("Git Error: {0}" -f $_)
         $ReturnValue = $false
