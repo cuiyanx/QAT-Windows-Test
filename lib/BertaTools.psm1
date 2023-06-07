@@ -99,6 +99,7 @@ function Berta-CopyTestDir
             git clone $RemoteTestDir $LocalTestDir
         } -ArgumentList $LocalTestDir, $LocalIPProxy, $RemoteTestDir  | out-null
     } catch {
+        Win-DebugTimestamp -output ("Git Error: {0}" -f $_)
         $ReturnValue = $false
     }
 

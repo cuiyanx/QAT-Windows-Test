@@ -261,7 +261,7 @@ class QatInstaller(BuildInstaller):
             return {'successful': False, 'installed': False, 'reboot': False}
 
     def copy_test_dir(self):
-        log.info('copy qat test script from repo')
+        log.info('Copy qat test script from repo')
         CopyFlag = False
         command = r"""Berta-CopyTestDir"""
         out, rc = self.invoke_pscommand(self.pspath, command, 500, shell=False)
@@ -274,8 +274,7 @@ class QatInstaller(BuildInstaller):
 
         if CopyFlag:
             try:
-                if os.path.exists(self.QATTEST_DST):
-                    shutil.rmtree(self.QATTEST_DST)
+                log.info('Copy from Git fail, so change to copy tree')
                 shutil.copytree(self.QATTEST_SRC, self.QATTEST_DST)
             except:
                 raise
