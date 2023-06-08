@@ -187,7 +187,7 @@ $global:TraceLogCommand = [hashtable] @{
                 $TraceLogOpts.Remote.IcpQat.StartArgs
             Flush = "-flush {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
             List = "-q {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
-            Stop = "-stop {0}" -f $TraceLogOpts.Host.IcpQat.SessionName
+            Stop = "-stop {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
             FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
                 $TraceLogOpts.Remote.IcpQat.EtlFullPath,
                 $TraceLogOpts.Remote.FMTFullPath,
@@ -205,7 +205,7 @@ $global:TraceLogCommand = [hashtable] @{
                 $TraceLogOpts.Remote.CfQat.StartArgs
             Flush = "-flush {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
             List = "-q {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
-            Stop = "-stop {0}" -f $TraceLogOpts.Host.CfQat.SessionName
+            Stop = "-stop {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
             FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
                 $TraceLogOpts.Remote.CfQat.EtlFullPath,
                 $TraceLogOpts.Remote.FMTFullPath,
