@@ -103,6 +103,10 @@ try {
 
     # Special: For QAT20
     if ($LocationInfo.QatType -eq "QAT20") {
+        if ($LocationInfo.UQMode) {
+            [System.Array]$AllTestType.Operation = ("heartbeat")
+        }
+
         if ([String]::IsNullOrEmpty($runTestCase)) {
             [System.Array]$CNGTestAlgo = ("rsa", "ecdsa", "ecdh")
         }

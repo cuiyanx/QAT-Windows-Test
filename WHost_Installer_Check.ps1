@@ -96,8 +96,6 @@ try {
     }
 
     # Special: For QAT20
-    if ($LocationInfo.QatType -eq "QAT20") {
-    }
 
     Foreach ($CompareType in $CompareTypes) {
         if ($CompareType -eq "true") {

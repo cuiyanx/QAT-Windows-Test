@@ -250,7 +250,8 @@ try {
                     $HVModeToolCNGTest = $false
 
                     [System.Array]$SmokeTestParcompTypes = (
-                        "Base"
+                        "Base",
+                        "Heartbeat"
                     )
                 }
             }

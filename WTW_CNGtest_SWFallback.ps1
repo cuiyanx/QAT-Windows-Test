@@ -128,6 +128,10 @@ try {
 
     # Special: For QAT20
     if ($LocationInfo.QatType -eq "QAT20") {
+        if ($LocationInfo.UQMode) {
+            throw ("QAT20: On the HVMode, not support UQ Mode.")
+        }
+
         if ([String]::IsNullOrEmpty($runTestCase)) {
             [System.Array]$CNGTestAlgo = ("rsa", "ecdsa", "ecdh")
         }

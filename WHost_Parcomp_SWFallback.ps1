@@ -110,7 +110,7 @@ try {
     # Special: For QAT20
     if ($LocationInfo.QatType -eq "QAT20") {
         if ($LocationInfo.UQMode) {
-            throw ("QAT20: On the Host, UQ mode not support SWFallback test.")
+            [System.Array]$AllTestType.Operation = ("heartbeat")
         }
     }
 
