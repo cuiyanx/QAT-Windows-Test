@@ -180,21 +180,14 @@ $global:TraceLogCommand = [hashtable] @{
             $TraceLogOpts.Remote.PDBFullPath,
             $TraceLogOpts.Remote.FMTFullPath
         IcpQat = [hashtable] @{
-            Start = "{0} -start {1} -f {2} -guid {3} {4}" -f
-                $TraceLogOpts.Remote.ExePath,
+            Start = "-start {0} -f {1} -guid {2} {3}" -f
                 $TraceLogOpts.Remote.IcpQat.SessionName,
                 $TraceLogOpts.Remote.IcpQat.EtlFullPath,
                 $TraceLogOpts.Guid.IcpQat,
                 $TraceLogOpts.Remote.IcpQat.StartArgs
-            Flush = "{0} -flush {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Remote.IcpQat.SessionName
-            List = "{0} -q {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Remote.IcpQat.SessionName
-            Stop = "{0} -stop {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Host.IcpQat.SessionName
+            Flush = "-flush {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
+            List = "-q {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
+            Stop = "-stop {0}" -f $TraceLogOpts.Host.IcpQat.SessionName
             FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
                 $TraceLogOpts.Remote.IcpQat.EtlFullPath,
                 $TraceLogOpts.Remote.FMTFullPath,
@@ -205,21 +198,14 @@ $global:TraceLogCommand = [hashtable] @{
                 $TraceLogOpts.Remote.IcpQat.LogFullPath
         }
         CfQat = [hashtable] @{
-            Start = "{0} -start {1} -f {2} -guid {3} {4}" -f
-                $TraceLogOpts.Remote.ExePath,
+            Start = "-start {0} -f {1} -guid {2} {3}" -f
                 $TraceLogOpts.Remote.CfQat.SessionName,
                 $TraceLogOpts.Remote.CfQat.EtlFullPath,
                 $TraceLogOpts.Guid.CfQat,
                 $TraceLogOpts.Remote.CfQat.StartArgs
-            Flush = "{0} -flush {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Remote.CfQat.SessionName
-            List = "{0} -q {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Remote.CfQat.SessionName
-            Stop = "{0} -stop {1}" -f
-                $TraceLogOpts.Remote.ExePath,
-                $TraceLogOpts.Host.CfQat.SessionName
+            Flush = "-flush {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
+            List = "-q {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
+            Stop = "-stop {0}" -f $TraceLogOpts.Host.CfQat.SessionName
             FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
                 $TraceLogOpts.Remote.CfQat.EtlFullPath,
                 $TraceLogOpts.Remote.FMTFullPath,
