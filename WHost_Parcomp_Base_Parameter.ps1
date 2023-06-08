@@ -111,7 +111,9 @@ try {
     # Special: For QAT20
     if ($LocationInfo.QatType -eq "QAT20") {
         if ($LocationInfo.UQMode) {
-            [System.Array]$ParcompProvider = ("qat", "qatgzip", "qatgzipext")
+            if ([String]::IsNullOrEmpty($runTestCase)) {
+                [System.Array]$ParcompProvider = ("qat", "qatgzip", "qatgzipext")
+            }
         }
 
         if ([String]::IsNullOrEmpty($runTestCase)) {
