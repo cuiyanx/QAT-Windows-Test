@@ -70,7 +70,9 @@ try {
     # Init CNGTest
     [System.Array]$SmokeTestCNGTestTypes = (
         "Base",
-        "Performance"
+        "Performance",
+        "Heartbeat",
+        "Disable"
     )
     [System.Array]$CNGtestConfigs = (
         [hashtable] @{
@@ -200,7 +202,7 @@ try {
 
     # If driver verifier is true, will not support performance test
     if ($BertaConfig["driver_verifier"]) {
-        [System.Array]$SmokeTestCNGTestTypes = ("Base")
+        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Heartbeat", "Disable")
         [System.Array]$SmokeTestParcompTypes = ("Base", "Heartbeat", "Disable")
     }
 
@@ -249,10 +251,13 @@ try {
                     $HVModeToolParcomp = $false
                     $HVModeToolCNGTest = $false
 
-                    [System.Array]$SmokeTestParcompTypes = (
-                        "Base",
-                        "Heartbeat"
-                    )
+                    if ($BertaConfig["driver_verifier"]) {
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Heartbeat")
+                        [System.Array]$SmokeTestParcompTypes = ("Base", "Heartbeat")
+                    } else {
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Performance", "Heartbeat")
+                        [System.Array]$SmokeTestParcompTypes = ("Base", "Performance", "Heartbeat")
+                    }
                 }
             }
 
@@ -299,11 +304,13 @@ try {
                     $HVModeToolParcomp = $true
                     $HVModeToolCNGTest = $true
 
-                    [System.Array]$SmokeTestParcompTypes = (
-                        "Base",
-                        "Heartbeat",
-                        "Disable"
-                    )
+                    if ($BertaConfig["driver_verifier"]) {
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Heartbeat", "Disable")
+                        [System.Array]$SmokeTestParcompTypes = ("Base", "Heartbeat", "Disable")
+                    } else {
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Performance", "Heartbeat", "Disable")
+                        [System.Array]$SmokeTestParcompTypes = ("Base", "Performance", "Heartbeat", "Disable")
+                    }
                 }
             }
 
@@ -488,6 +495,79 @@ try {
                                         e = $CNGTestResult.error
                                         testOps = $CNGTestResult.testOps
                                         banckmarkOps = $CNGTestResult.banckmarkOps
+                                    }
+
+                                    WBase-WriteTestResult -TestResult $TestCaseResultsList
+                                }
+                            }
+                        }
+
+                        if (($SmokeTestCNGTestType -eq "Heartbeat") -or
+                            ($SmokeTestCNGTestType -eq "Disable")) {
+                            $testNameHeader = "SmokeTest_Host_{0}_{1}_Fallback_qa" -f
+                                $LocationInfo.QatType,
+                                $UQString
+
+                            if ($SmokeTestCNGTestType -eq "Heartbeat") {$TestType = "heartbeat"}
+                            if ($SmokeTestCNGTestType -eq "Disable") {$TestType = "disable"}
+                            Foreach ($CNGtestConfig in $CNGtestConfigs) {
+                                if ($CNGtestConfig.Algo -eq "rsa") {
+                                    $keyLength = $CNGtestConfig.keyLength
+                                    $ecccurve = "nistP256"
+                                    $padding = $CNGtestConfig.Padding
+
+                                    $testName = "{0}_{1}_{2}_{3}_{4}" -f
+                                        $testNameHeader,
+                                        $CNGtestConfig.Algo,
+                                        $CNGtestConfig.Operation,
+                                        $keyLength,
+                                        $padding
+                                } else {
+                                    $keyLength = 2048
+                                    $ecccurve = $CNGtestConfig.Ecccurve
+                                    $padding = "pkcs1"
+
+                                    $testName = "{0}_{1}_{2}_{3}" -f
+                                        $testNameHeader,
+                                        $CNGtestConfig.Algo,
+                                        $CNGtestConfig.Operation,
+                                        $ecccurve
+                                }
+
+                                if ($CompareFlag) {
+                                    $TestCaseResultsList = [hashtable] @{
+                                        tc = $testName
+                                        s = $TestResultToBerta.NotRun
+                                        e = "no_error"
+                                    }
+
+                                    WBase-WriteTestResult `
+                                        -TestResult $TestCaseResultsList `
+                                        -ResultFile $CompareFile
+                                } else {
+                                    $CNGTestResult = WinHost-CNGTestSWfallback `
+                                        -algo $CNGtestConfig.Algo `
+                                        -operation $CNGtestConfig.Operation `
+                                        -provider $CNGtestProvider `
+                                        -keyLength $keyLength `
+                                        -padding $padding `
+                                        -ecccurve $ecccurve `
+                                        -numThreads $CNGtestnumThreads `
+                                        -numIter $CNGtestnumIter `
+                                        -TestPathName $CNGtestTestPathName `
+                                        -BertaResultPath $BertaResultPath `
+                                        -TestType $TestType
+
+                                    if ($CNGTestResult.result) {
+                                        $CNGTestResult.result = $TestResultToBerta.Pass
+                                    } else {
+                                        $CNGTestResult.result = $TestResultToBerta.Fail
+                                    }
+
+                                    $TestCaseResultsList = [hashtable] @{
+                                        tc = $testName
+                                        s = $CNGTestResult.result
+                                        e = $CNGTestResult.error
                                     }
 
                                     WBase-WriteTestResult -TestResult $TestCaseResultsList
