@@ -166,8 +166,8 @@ function WinHostErrorHandle
     Win-DebugTimestamp -output ("Host: Copy tracelog etl files to 'BertaResultPath'")
     $HostIcpQatFile = "{0}_host.etl" -f $IcpQatFileName
     $HostCfQatFile = "{0}_host.etl" -f $CfQatFileName
-    $HostIcpQatFileName = $TraceLogOpts.Host.IcpQat.EtlFullPath
-    $HostCfQatFileName = $TraceLogOpts.Host.CfQat.EtlFullPath
+    $HostIcpQatFileName = $TraceLogOpts.EtlFullPath.IcpQat
+    $HostCfQatFileName = $TraceLogOpts.EtlFullPath.CfQat
 
     if (Test-Path -Path $HostIcpQatFileName) {
         Copy-Item -Path $HostIcpQatFileName -Destination $HostIcpQatFile -Force -Confirm:$false | out-null

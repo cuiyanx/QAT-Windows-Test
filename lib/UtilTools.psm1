@@ -26,27 +26,43 @@ function UT-TraceLogStart
 
     if ($Remote) {
         $TraceLogCheckStatus = Invoke-Command -Session $Session -ScriptBlock {
-            Param($TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts)
+            Param($TraceLogCheckFlags, $TraceLogOpts)
             $ReturnValue = [hashtable] @{}
 
             ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-                $checkProcess = &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].List.split()
+                $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag]
+                $StartFlag = $true
 
                 if ($checkProcess[0] -match "successfully") {
-                    if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
-                        &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].Flush.split() | out-null
+                    if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
+                        &$TraceLogOpts.ExePath -flush $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag] | out-null
+                        $StartFlag = $false
                     } else {
-                        &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].Stop.split() | out-null
+                        &$TraceLogOpts.ExePath -stop $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag] | out-null
+                        $StartFlag = $true
                         Start-Sleep -Seconds 5
-                        &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].Start.split() | out-null
                     }
-                } else {
-                    &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].Start.split() | out-null
                 }
 
-                $checkProcess = &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].List.split()
+                if ($StartFlag) {
+                    &$TraceLogOpts.ExePath `
+                        -start $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag] `
+                        -f $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag] `
+                        -guid $TraceLogOpts.Guid[$TraceLogCheckFlag] `
+                        -rt `
+                        -level 3 `
+                        -matchanykw 0xFFFFFFFF `
+                        -b 200 `
+                        -ft 1 `
+                        -min 4 `
+                        -max 21 `
+                        -seq 200 `
+                        -hybridshutdown stop | out-null
+                }
+
+                $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag]
                 if ($checkProcess[0] -match "successfully") {
-                    if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
+                    if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
                         $ReturnValue[$TraceLogCheckFlag] = $true
                     } else {
                         $ReturnValue[$TraceLogCheckFlag] = $false
@@ -57,27 +73,43 @@ function UT-TraceLogStart
             }
 
             return $ReturnValue
-        } -ArgumentList $TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts
+        } -ArgumentList $TraceLogCheckFlags, $TraceLogOpts
     } else {
         $TraceLogCheckStatus = [hashtable] @{}
         ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag]
+            $StartFlag = $true
+
             if ($checkProcess[0] -match "successfully") {
-                if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Flush | out-null
+                if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
+                    &$TraceLogOpts.ExePath -flush $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag] | out-null
+                    $StartFlag = $false
                 } else {
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Stop | out-null
+                    &$TraceLogOpts.ExePath -stop $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag] | out-null
+                    $StartFlag = $true
                     Start-Sleep -Seconds 5
-                    Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Start | out-null
                 }
-            } else {
-                Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Start | out-null
             }
 
-            Start-Sleep -Seconds 5
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            if ($StartFlag) {
+                &$TraceLogOpts.ExePath `
+                    -start $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag] `
+                    -f $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag] `
+                    -guid $TraceLogOpts.Guid[$TraceLogCheckFlag] `
+                    -rt `
+                    -level 4 `
+                    -matchanykw 0xFFFFFFFF `
+                    -b 200 `
+                    -ft 1 `
+                    -min 4 `
+                    -max 21 `
+                    -seq 200 `
+                    -hybridshutdown stop | out-null
+            }
+
+            $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag]
             if ($checkProcess[0] -match "successfully") {
-                if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
+                if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
                 } else {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $false
@@ -93,13 +125,13 @@ function UT-TraceLogStart
             Win-DebugTimestamp -output (
                 "{0}: The process named '{1}' is working" -f
                     $LogKeyWord,
-                    $TraceLogOpts[$TraceLogType][$TraceLogCheckFlag].SessionName
+                    $TraceLogOpts.SessionName[$TraceLogType][$TraceLogCheckFlag]
             )
         } else {
             Win-DebugTimestamp -output (
                 "{0}: The process named '{1}' is not working" -f
                     $LogKeyWord,
-                    $TraceLogOpts[$TraceLogType][$TraceLogCheckFlag].SessionName
+                    $TraceLogOpts.SessionName[$TraceLogType][$TraceLogCheckFlag]
             )
         }
     }
@@ -131,19 +163,19 @@ function UT-TraceLogStop
 
     if ($Remote) {
         $TraceLogCheckStatus = Invoke-Command -Session $Session -ScriptBlock {
-            Param($TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts)
+            Param($TraceLogCheckFlags, $TraceLogOpts)
             $ReturnValue = [hashtable] @{}
 
             ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-                $checkProcess = &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].List.split()
+                $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag]
                 if ($checkProcess[0] -match "successfully") {
-                    &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].Stop.split() | out-null
+                    &$TraceLogOpts.ExePath -stop $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag] | out-null
                     Start-Sleep -Seconds 5
                 }
 
-                $checkProcess = &$TraceLogOpts.Remote.ExePath $TraceLogCommand.Remote[$TraceLogCheckFlag].List.split()
+                $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Remote[$TraceLogCheckFlag]
                 if ($checkProcess[0] -match "recognized") {
-                    if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath) {
+                    if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
                         $ReturnValue[$TraceLogCheckFlag] = $true
                     } else {
                         $ReturnValue[$TraceLogCheckFlag] = $false
@@ -154,19 +186,19 @@ function UT-TraceLogStop
             }
 
             return $ReturnValue
-        } -ArgumentList $TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts
+        } -ArgumentList $TraceLogCheckFlags, $TraceLogOpts
     } else {
         $TraceLogCheckStatus = [hashtable] @{}
         ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag]
             if ($checkProcess[0] -match "successfully") {
-                Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].Stop | out-null
+                &$TraceLogOpts.ExePath -stop $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag] | out-null
                 Start-Sleep -Seconds 5
             }
 
-            $checkProcess = Invoke-Expression $TraceLogCommand.Host[$TraceLogCheckFlag].List
+            $checkProcess = &$TraceLogOpts.ExePath -q $TraceLogOpts.SessionName.Host[$TraceLogCheckFlag]
             if ($checkProcess[0] -match "recognized") {
-                if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath) {
+                if (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag]) {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
                 } else {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $false
@@ -182,13 +214,13 @@ function UT-TraceLogStop
             Win-DebugTimestamp -output (
                 "{0}: The process named '{1}' is stopped" -f
                     $LogKeyWord,
-                    $TraceLogOpts[$TraceLogType][$TraceLogCheckFlag].SessionName
+                    $TraceLogOpts.SessionName[$TraceLogType][$TraceLogCheckFlag]
             )
         } else {
             Win-DebugTimestamp -output (
                 "{0}: The process named '{1}' is not stopped" -f
                     $LogKeyWord,
-                    $TraceLogOpts[$TraceLogType][$TraceLogCheckFlag].SessionName
+                    $TraceLogOpts.SessionName[$TraceLogType][$TraceLogCheckFlag]
             )
         }
     }
@@ -220,31 +252,38 @@ function UT-TraceLogTransfer
 
     if ($Remote) {
         $TraceLogCheckStatus = Invoke-Command -Session $Session -ScriptBlock {
-            Param($TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts)
+            Param($TraceLogCheckFlags, $TraceLogOpts)
             $ReturnValue = [hashtable] @{}
 
-            Start-Process -FilePath  $TraceLogOpts.Remote.PDBExePath `
-                          -ArgumentList $TraceLogCommand.Remote.PDBToFMT `
+            $CommandArgs = "-f {0}\\*.pdb -p {1} 2>&1" -f
+                $TraceLogOpts.PDBPath,
+                $TraceLogOpts.FMTPath
+            Start-Process -FilePath  $TraceLogOpts.PDBExePath `
+                          -ArgumentList $CommandArgs `
                           -NoNewWindow `
                           -Wait | out-null
 
             ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
                 $ReturnValue[$TraceLogCheckFlag] = $true
-                if (-not (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].PDBCopyPath)) {
+                if (-not (Test-Path -Path $TraceLogOpts.PDBFullPath[$TraceLogCheckFlag])) {
                     $ReturnValue[$TraceLogCheckFlag] = $false
                 }
 
-                if (-not (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].EtlFullPath)) {
+                if (-not (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag])) {
                     $ReturnValue[$TraceLogCheckFlag] = $false
                 }
 
                 if ($ReturnValue[$TraceLogCheckFlag]) {
-                    Start-Process -FilePath  $TraceLogOpts.Remote.FMTExePath `
-                                  -ArgumentList $TraceLogCommand.Remote[$TraceLogCheckFlag].FMTToLog `
+                    $CommandArgs = "{0} -p {1} -o {2} -nosummary" -f
+                        $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag],
+                        $TraceLogOpts.FMTPath,
+                        $TraceLogOpts.LogFullPath[$TraceLogCheckFlag]
+                    Start-Process -FilePath  $TraceLogOpts.FMTExePath `
+                                  -ArgumentList $CommandArgs `
                                   -NoNewWindow `
                                   -Wait | out-null
 
-                    if (Test-Path -Path $TraceLogOpts.Remote[$TraceLogCheckFlag].LogFullPath) {
+                    if (Test-Path -Path $TraceLogOpts.LogFullPath[$TraceLogCheckFlag]) {
                         $ReturnValue[$TraceLogCheckFlag] = $true
                     } else {
                         $ReturnValue[$TraceLogCheckFlag] = $false
@@ -253,31 +292,38 @@ function UT-TraceLogTransfer
             }
 
             return $ReturnValue
-        } -ArgumentList $TraceLogCommand, $TraceLogCheckFlags, $TraceLogOpts
+        } -ArgumentList $TraceLogCheckFlags, $TraceLogOpts
     } else {
-        Start-Process -FilePath  $TraceLogOpts.Host.PDBExePath `
-                      -ArgumentList $TraceLogCommand.Host.PDBToFMT `
+        $CommandArgs = "-f {0}\\*.pdb -p {1} 2>&1" -f
+            $TraceLogOpts.PDBPath,
+            $TraceLogOpts.FMTPath
+        Start-Process -FilePath  $TraceLogOpts.PDBExePath `
+                      -ArgumentList $CommandArgs `
                       -NoNewWindow `
                       -Wait | out-null
 
         $TraceLogCheckStatus = [hashtable] @{}
         ForEach ($TraceLogCheckFlag in $TraceLogCheckFlags) {
             $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
-            if (-not (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].PDBCopyPath)) {
+            if (-not (Test-Path -Path $TraceLogOpts.PDBFullPath[$TraceLogCheckFlag])) {
                 $TraceLogCheckStatus[$TraceLogCheckFlag] = $false
             }
 
-            if (-not (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].EtlFullPath)) {
+            if (-not (Test-Path -Path $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag])) {
                 $TraceLogCheckStatus[$TraceLogCheckFlag] = $false
             }
 
             if ($TraceLogCheckStatus[$TraceLogCheckFlag]) {
-                Start-Process -FilePath  $TraceLogOpts.Host.FMTExePath `
-                              -ArgumentList $TraceLogCommand.Host[$TraceLogCheckFlag].FMTToLog `
+                $CommandArgs = "{0} -p {1} -o {2} -nosummary" -f
+                    $TraceLogOpts.EtlFullPath[$TraceLogCheckFlag],
+                    $TraceLogOpts.FMTPath,
+                    $TraceLogOpts.LogFullPath[$TraceLogCheckFlag]
+                Start-Process -FilePath  $TraceLogOpts.FMTExePath `
+                              -ArgumentList $CommandArgs `
                               -NoNewWindow `
                               -Wait | out-null
 
-                if (Test-Path -Path $TraceLogOpts.Host[$TraceLogCheckFlag].LogFullPath) {
+                if (Test-Path -Path $TraceLogOpts.LogFullPath[$TraceLogCheckFlag]) {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $true
                 } else {
                     $TraceLogCheckStatus[$TraceLogCheckFlag] = $false
@@ -291,7 +337,7 @@ function UT-TraceLogTransfer
             Win-DebugTimestamp -output (
                 "{0}: The transfer is successful > {1}" -f
                     $LogKeyWord,
-                    $TraceLogOpts[$TraceLogType][$TraceLogCheckFlag].LogFullPath
+                    $TraceLogOpts.LogFullPath[$TraceLogCheckFlag]
             )
         } else {
             Win-DebugTimestamp -output (
@@ -307,7 +353,7 @@ function UT-TraceLogCheck
 
     UT-TraceLogStop -Remote $false | out-null
     UT-TraceLogTransfer -Remote $false | out-null
-    $TraceViewContent = Get-Content -Path $TraceLogOpts.Host.IcpQat.LogFullPath
+    $TraceViewContent = Get-Content -Path $TraceLogOpts.LogFullPath.IcpQat
 
     Foreach ($Number in (0 .. ($LocationInfo.PF.Number - 1))) {
         $startQatDevice = "qat_dev{0} started" -f $Number

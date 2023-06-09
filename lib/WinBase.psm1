@@ -226,9 +226,10 @@ function WBase-PFDriverPathInit
 
     # Make the test directories clear
     if (Test-Path -Path $STVWinPath) {
+        $ExcludeFiles = @("*.txt", "*.exe")
         Remove-Item `
             -Path $STVWinPath `
-            -Exclude "*.txt" `
+            -Exclude $ExcludeFiles `
             -Recurse `
             -Force `
             -Confirm:$false `
@@ -337,6 +338,34 @@ function WBase-STVWinPathInit
                     -TestFileSize $Size | out-null
             }
         }
+    }
+
+    # Copy all exe files for tracelog
+    if (-not (Test-Path -Path $TraceLogOpts.ExePath)) {
+        Copy-Item `
+            -Path ("{0}\\utils\\tracelog.exe" -f $QATTESTPATH) `
+            -Destination $TraceLogOpts.ExePath `
+            -Force `
+            -Confirm:$false `
+            -ErrorAction Stop | out-null
+    }
+
+    if (-not (Test-Path -Path $TraceLogOpts.PDBExePath)) {
+        Copy-Item `
+            -Path ("{0}\\utils\\tracepdb.exe" -f $QATTESTPATH) `
+            -Destination $TraceLogOpts.PDBExePath `
+            -Force `
+            -Confirm:$false `
+            -ErrorAction Stop | out-null
+    }
+
+    if (-not (Test-Path -Path $TraceLogOpts.FMTExePath)) {
+        Copy-Item `
+            -Path ("{0}\\utils\\tracefmt.exe" -f $QATTESTPATH) `
+            -Destination $TraceLogOpts.FMTExePath `
+            -Force `
+            -Confirm:$false `
+            -ErrorAction Stop | out-null
     }
 
     # Make the automation directories if they do not exist
@@ -471,22 +500,19 @@ function WBase-LocationInfoInit
         -DisableFlag $DisableDeviceFlag | out-null
 
     # Correct ICPQAT file name
-    $TraceLogOpts.Host.IcpQat.PDBFullPath = "{0}\\{1}.pdb" -f
+    $TraceLogOpts.PDBDriverPath.Host.IcpQat = "{0}\\{1}.pdb" -f
         $LocalPFDriverPath,
         $LocationInfo.IcpQatName
-    $TraceLogOpts.Host.IcpQat.PDBCopyPath = "{0}\\TraceLog\\PDB\\{1}.pdb" -f
-        $STVWinPath,
-        $LocationInfo.IcpQatName
-    $TraceLogOpts.Remote.IcpQat.PDBFullPath = "{0}\\{1}.pdb" -f
+    $TraceLogOpts.PDBDriverPath.Remote.IcpQat = "{0}\\{1}.pdb" -f
         $LocalVFDriverPath,
         $LocationInfo.IcpQatName
-    $TraceLogOpts.Remote.IcpQat.PDBCopyPath = "{0}\\TraceLog\\PDB\\{1}.pdb" -f
+    $TraceLogOpts.PDBFullPath.IcpQat = "{0}\\TraceLog\\PDB\\{1}.pdb" -f
         $STVWinPath,
         $LocationInfo.IcpQatName
 
-    if (Test-Path -Path $TraceLogOpts.Host.TraceLogFullPath) {
+    if (Test-Path -Path $TraceLogOpts.TraceLogPath) {
         Remove-Item `
-            -Path $TraceLogOpts.Host.TraceLogFullPath `
+            -Path $TraceLogOpts.TraceLogPath `
             -Recurse `
             -Force `
             -Exclude "*.etl" `
@@ -494,22 +520,28 @@ function WBase-LocationInfoInit
             -ErrorAction Stop | out-null
     } else {
         New-Item `
-            -Path $TraceLogOpts.Host.TraceLogFullPath `
+            -Path $TraceLogOpts.TraceLogPath `
             -ItemType Directory | out-null
     }
 
     New-Item `
-        -Path $TraceLogOpts.Host.FMTFullPath `
+        -Path $TraceLogOpts.FMTPath `
         -ItemType Directory | out-null
     New-Item `
-        -Path $TraceLogOpts.Host.PDBFullPath `
+        -Path $TraceLogOpts.PDBPath `
         -ItemType Directory | out-null
-    Copy-Item `
-        -Path $TraceLogOpts.Host.IcpQat.PDBFullPath `
-        -Destination $TraceLogOpts.Host.IcpQat.PDBCopyPath | out-null
-    Copy-Item `
-        -Path $TraceLogOpts.Host.CfQat.PDBFullPath `
-        -Destination $TraceLogOpts.Host.CfQat.PDBCopyPath | out-null
+
+    if (Test-Path -Path $TraceLogOpts.PDBDriverPath.Host.IcpQat) {
+        Copy-Item `
+            -Path $TraceLogOpts.PDBDriverPath.Host.IcpQat `
+            -Destination $TraceLogOpts.PDBFullPath.IcpQat | out-null
+    }
+
+    if (Test-Path -Path $TraceLogOpts.PDBDriverPath.Host.CfQat) {
+        Copy-Item `
+            -Path $TraceLogOpts.PDBDriverPath.Host.CfQat `
+            -Destination $TraceLogOpts.PDBFullPath.CfQat | out-null
+    }
 
     # Start trace log tool
     UT-TraceLogStart -Remote $false | out-null

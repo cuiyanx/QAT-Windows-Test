@@ -66,155 +66,46 @@ $global:DriverVerifierArgs = [hashtable] @{
 # About trace log tool
 $global:TraceLogOpts = [hashtable] @{
     Guid = [hashtable] @{
-        IcpQat = "'#f1057c32-3432-43ee-a282-c8a7086d25d9'"
-        CfQat = "'#9b523b97-ac34-4e88-9a9d-fe16d4c9fddb'"
+        IcpQat = "#f1057c32-3432-43ee-a282-c8a7086d25d9"
+        CfQat = "#9b523b97-ac34-4e88-9a9d-fe16d4c9fddb"
     }
-    Host = [hashtable] @{
-        ExePath = "{0}\\utils\\tracelog.exe" -f $QATTESTPATH
-        PDBExePath = "{0}\\utils\\tracepdb.exe" -f $QATTESTPATH
-        FMTExePath = "{0}\\utils\\tracefmt.exe" -f $QATTESTPATH
-        TraceLogFullPath = "{0}\\TraceLog" -f $STVWinPath
-        FMTFullPath = "{0}\\TraceLog\\FMT" -f $STVWinPath
-        PDBFullPath = "{0}\\TraceLog\\PDB" -f $STVWinPath
-        IcpQat = [hashtable] @{
-            SessionName = "qatwin_host_icpqat"
-            StartArgs = "-rt -level 4 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
-            PDBFullPath = "{0}\\icp_qat.pdb" -f $LocalPFDriverPath
-            PDBCopyPath = "{0}\\TraceLog\\PDB\\icp_qat.pdb" -f $STVWinPath
-            EtlFullPath = "{0}\\TraceLog\\TraceLog_icpqat.etl" -f $STVWinPath
-            LogFullPath = "{0}\\TraceLog\\TraceLog_icpqat.log" -f $STVWinPath
+    ExePath = "{0}\\tracelog.exe" -f $STVWinPath
+    PDBExePath = "{0}\\tracepdb.exe" -f $STVWinPath
+    FMTExePath = "{0}\\tracefmt.exe" -f $STVWinPath
+    TraceLogPath = "{0}\\TraceLog" -f $STVWinPath
+    FMTPath = "{0}\\TraceLog\\FMT" -f $STVWinPath
+    PDBPath = "{0}\\TraceLog\\PDB" -f $STVWinPath
+    SessionName = [hashtable] @{
+        Host = [hashtable] @{
+            IcpQat = "qatwin_host_icpqat"
+            CfQat = "qatwin_host_cfqat"
         }
-        CfQat = [hashtable] @{
-            SessionName = "qatwin_host_cfqat"
-            StartArgs = "-rt -level 4 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
-            PDBFullPath = "{0}\\CfQat.pdb" -f $LocalPFDriverPath
-            PDBCopyPath = "{0}\\TraceLog\\PDB\\CfQat.pdb" -f $STVWinPath
-            EtlFullPath = "{0}\\TraceLog\\TraceLog_cfqat.etl" -f $STVWinPath
-            LogFullPath = "{0}\\TraceLog\\TraceLog_cfqat.log" -f $STVWinPath
+        Remote = [hashtable] @{
+            IcpQat = "qatwin_remote_icpqat"
+            CfQat = "qatwin_remote_cfqat"
         }
     }
-    Remote = [hashtable] @{
-        ExePath = "{0}\\tracelog.exe" -f $STVWinPath
-        PDBExePath = "{0}\\tracepdb.exe" -f $STVWinPath
-        FMTExePath = "{0}\\tracefmt.exe" -f $STVWinPath
-        TraceLogFullPath = "{0}\\TraceLog" -f $STVWinPath
-        FMTFullPath = "{0}\\TraceLog\\FMT" -f $STVWinPath
-        PDBFullPath = "{0}\\TraceLog\\PDB" -f $STVWinPath
-        IcpQat = [hashtable] @{
-            SessionName = "qatwin_remote_icpqat"
-            StartArgs = "-rt -level 3 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
-            PDBFullPath = "{0}\\icp_qat.pdb" -f $LocalVFDriverPath
-            PDBCopyPath = "{0}\\TraceLog\\PDB\\icp_qat.pdb" -f $STVWinPath
-            EtlFullPath = "{0}\\TraceLog\\TraceLog_icpqat.etl" -f $STVWinPath
-            LogFullPath = "{0}\\TraceLog\\TraceLog_icpqat.log" -f $STVWinPath
+    PDBDriverPath = [hashtable] @{
+        Host = [hashtable] @{
+            IcpQat = "{0}\\icp_qat4.pdb" -f $LocalPFDriverPath
+            CfQat = "{0}\\CfQat.pdb" -f $LocalPFDriverPath
         }
-        CfQat = [hashtable] @{
-            SessionName = "qatwin_remote_cfqat"
-            StartArgs = "-rt -level 3 -matchanykw 0xFFFFFFFF -b 200 -ft 1 -min 4 -max 21 -seq 200 -hybridshutdown stop"
-            PDBFullPath = "{0}\\CfQat.pdb" -f $LocalVFDriverPath
-            PDBCopyPath = "{0}\\TraceLog\\PDB\\CfQat.pdb" -f $STVWinPath
-            EtlFullPath = "{0}\\TraceLog\\TraceLog_cfqat.etl" -f $STVWinPath
-            LogFullPath = "{0}\\TraceLog\\TraceLog_cfqat.log" -f $STVWinPath
+        Remote = [hashtable] @{
+            IcpQat = "{0}\\icp_qat4.pdb" -f $LocalVFDriverPath
+            CfQat = "{0}\\CfQat.pdb" -f $LocalVFDriverPath
         }
     }
-}
-
-$global:TraceLogCommand = [hashtable] @{
-    Host = [hashtable] @{
-        PDBToFMT = "-f {0}\\*.pdb -p {1} 2>&1" -f
-            $TraceLogOpts.Host.PDBFullPath,
-            $TraceLogOpts.Host.FMTFullPath
-        IcpQat = [hashtable] @{
-            Start = "{0} -start {1} -f {2} -guid {3} {4}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.IcpQat.SessionName,
-                $TraceLogOpts.Host.IcpQat.EtlFullPath,
-                $TraceLogOpts.Guid.IcpQat,
-                $TraceLogOpts.Host.IcpQat.StartArgs
-            Flush = "{0} -flush {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.IcpQat.SessionName
-            List = "{0} -q {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.IcpQat.SessionName
-            Stop = "{0} -stop {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.IcpQat.SessionName
-            FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Host.IcpQat.EtlFullPath,
-                $TraceLogOpts.Host.FMTFullPath,
-                $TraceLogOpts.Host.IcpQat.LogFullPath
-            Transfer = "-process {0} -pdb {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Host.IcpQat.EtlFullPath,
-                $TraceLogOpts.Host.IcpQat.PDBCopyPath,
-                $TraceLogOpts.Host.IcpQat.LogFullPath
-        }
-        CfQat = [hashtable] @{
-            Start = "{0} -start {1} -f {2} -guid {3} {4}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.CfQat.SessionName,
-                $TraceLogOpts.Host.CfQat.EtlFullPath,
-                $TraceLogOpts.Guid.CfQat,
-                $TraceLogOpts.Host.CfQat.StartArgs
-            Flush = "{0} -flush {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.CfQat.SessionName
-            List = "{0} -q {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.CfQat.SessionName
-            Stop = "{0} -stop {1}" -f
-                $TraceLogOpts.Host.ExePath,
-                $TraceLogOpts.Host.CfQat.SessionName
-            FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Host.CfQat.EtlFullPath,
-                $TraceLogOpts.Host.FMTFullPath,
-                $TraceLogOpts.Host.CfQat.LogFullPath
-            Transfer = "-process {0} -pdb {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Host.CfQat.EtlFullPath,
-                $TraceLogOpts.Host.CfQat.PDBCopyPath,
-                $TraceLogOpts.Host.CfQat.LogFullPath
-        }
+    PDBFullPath = [hashtable] @{
+        IcpQat = "{0}\\TraceLog\\PDB\\icp_qat4.pdb" -f $STVWinPath
+        CfQat = "{0}\\TraceLog\\PDB\\CfQat.pdb" -f $STVWinPath
     }
-    Remote = [hashtable] @{
-        PDBToFMT = "-f {0}\\*.pdb -p {1} 2>&1" -f
-            $TraceLogOpts.Remote.PDBFullPath,
-            $TraceLogOpts.Remote.FMTFullPath
-        IcpQat = [hashtable] @{
-            Start = "-start {0} -f {1} -guid {2} {3}" -f
-                $TraceLogOpts.Remote.IcpQat.SessionName,
-                $TraceLogOpts.Remote.IcpQat.EtlFullPath,
-                $TraceLogOpts.Guid.IcpQat,
-                $TraceLogOpts.Remote.IcpQat.StartArgs
-            Flush = "-flush {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
-            List = "-q {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
-            Stop = "-stop {0}" -f $TraceLogOpts.Remote.IcpQat.SessionName
-            FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Remote.IcpQat.EtlFullPath,
-                $TraceLogOpts.Remote.FMTFullPath,
-                $TraceLogOpts.Remote.IcpQat.LogFullPath
-            Transfer = "-process {0} -pdb {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Remote.IcpQat.EtlFullPath,
-                $TraceLogOpts.Remote.IcpQat.PDBCopyPath,
-                $TraceLogOpts.Remote.IcpQat.LogFullPath
-        }
-        CfQat = [hashtable] @{
-            Start = "-start {0} -f {1} -guid {2} {3}" -f
-                $TraceLogOpts.Remote.CfQat.SessionName,
-                $TraceLogOpts.Remote.CfQat.EtlFullPath,
-                $TraceLogOpts.Guid.CfQat,
-                $TraceLogOpts.Remote.CfQat.StartArgs
-            Flush = "-flush {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
-            List = "-q {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
-            Stop = "-stop {0}" -f $TraceLogOpts.Remote.CfQat.SessionName
-            FMTToLog = "{0} -p {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Remote.CfQat.EtlFullPath,
-                $TraceLogOpts.Remote.FMTFullPath,
-                $TraceLogOpts.Remote.CfQat.LogFullPath
-            Transfer = "-process {0} -pdb {1} -o {2} -nosummary" -f
-                $TraceLogOpts.Remote.CfQat.EtlFullPath,
-                $TraceLogOpts.Remote.CfQat.PDBCopyPath,
-                $TraceLogOpts.Remote.CfQat.LogFullPath
-        }
+    EtlFullPath = [hashtable] @{
+        IcpQat = "{0}\\TraceLog\\TraceLog_icpqat.etl" -f $STVWinPath
+        CfQat = "{0}\\TraceLog\\TraceLog_cfqat.etl" -f $STVWinPath
+    }
+    LogFullPath = [hashtable] @{
+        IcpQat = "{0}\\TraceLog\\TraceLog_icpqat.log" -f $STVWinPath
+        CfQat = "{0}\\TraceLog\\TraceLog_cfqat.log" -f $STVWinPath
     }
 }
 

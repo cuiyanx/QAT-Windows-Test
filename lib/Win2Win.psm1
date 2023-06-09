@@ -240,9 +240,9 @@ function WTW-ENVInit
         # Copy PDB files
         Invoke-Command -Session $Session -ScriptBlock {
             Param($TraceLogOpts)
-            if (Test-Path -Path $TraceLogOpts.Remote.TraceLogFullPath) {
+            if (Test-Path -Path $TraceLogOpts.TraceLogPath) {
                 Remove-Item `
-                    -Path $TraceLogOpts.Remote.TraceLogFullPath `
+                    -Path $TraceLogOpts.TraceLogPath `
                     -Recurse `
                     -Force `
                     -Exclude "*.etl" `
@@ -250,28 +250,28 @@ function WTW-ENVInit
                     -ErrorAction Stop | out-null
             } else {
                 New-Item `
-                    -Path $TraceLogOpts.Remote.TraceLogFullPath `
+                    -Path $TraceLogOpts.TraceLogPath `
                     -ItemType Directory | out-null
             }
 
             New-Item `
-                -Path $TraceLogOpts.Remote.FMTFullPath `
+                -Path $TraceLogOpts.FMTPath `
                 -ItemType Directory | out-null
 
             New-Item `
-                -Path $TraceLogOpts.Remote.PDBFullPath `
+                -Path $TraceLogOpts.PDBPath `
                 -ItemType Directory | out-null
         } -ArgumentList $TraceLogOpts | out-null
 
         Copy-Item `
             -ToSession $Session `
-            -Path $TraceLogOpts.Remote.IcpQat.PDBFullPath `
-            -Destination $TraceLogOpts.Remote.IcpQat.PDBCopyPath | out-null
+            -Path $TraceLogOpts.PDBDriverPath.Remote.IcpQat `
+            -Destination $TraceLogOpts.PDBFullPath.IcpQat | out-null
 
         Copy-Item `
             -ToSession $Session `
-            -Path $TraceLogOpts.Remote.CfQat.PDBFullPath `
-            -Destination $TraceLogOpts.Remote.CfQat.PDBCopyPath | out-null
+            -Path $TraceLogOpts.PDBDriverPath.Remote.CfQat `
+            -Destination $TraceLogOpts.PDBFullPath.CfQat | out-null
     }
 
     # Check and set Test mode and Debug mode and driver verifier
@@ -677,8 +677,8 @@ function WTWRemoteErrorHandle
 
             $Remote2HostIcpQatFile = "{0}_{1}.etl" -f $IcpQatFileName, $vmName.split("_")[1]
             $Remote2HostCfQatFile = "{0}_{1}.etl" -f $CfQatFileName, $vmName.split("_")[1]
-            $RemoteIcpQatFileName = $TraceLogOpts.Remote.IcpQat.EtlFullPath
-            $RemoteCfQatFileName = $TraceLogOpts.Remote.CfQat.EtlFullPath
+            $RemoteIcpQatFileName = $TraceLogOpts.EtlFullPath.IcpQat
+            $RemoteCfQatFileName = $TraceLogOpts.EtlFullPath.CfQat
 
             if (Invoke-Command -Session $Session -ScriptBlock {
                                                                 Param($RemoteIcpQatFileName)
@@ -2201,13 +2201,13 @@ function WTW-ParcompSWfallback
                                                                              $CompressProvider,
                                                                              $TestType
 
-            if (Test-Path -Path $TraceLogOpts.Host.IcpQat.EtlFullPath) {
-                Copy-Item -Path $TraceLogOpts.Host.IcpQat.EtlFullPath `
+            if (Test-Path -Path $TraceLogOpts.EtlFullPath.IcpQat) {
+                Copy-Item -Path $TraceLogOpts.EtlFullPath.IcpQat `
                           -Destination $HostIcpQatFile `
                           -Force `
                           -Confirm:$false | out-null
 
-                Get-Item -Path $TraceLogOpts.Host.IcpQat.EtlFullPath | Remove-Item -Recurse | out-null
+                Get-Item -Path $TraceLogOpts.EtlFullPath.IcpQat | Remove-Item -Recurse | out-null
             }
         }
 
@@ -2852,13 +2852,13 @@ function WTW-CNGTestSWfallback
                                                                              $operation,
                                                                              $TestType
 
-            if (Test-Path -Path $TraceLogOpts.Host.IcpQat.LogFullPath) {
-                Copy-Item -Path $TraceLogOpts.Host.IcpQat.LogFullPath `
+            if (Test-Path -Path $TraceLogOpts.LogFullPath.IcpQat) {
+                Copy-Item -Path $TraceLogOpts.LogFullPath.IcpQat `
                           -Destination $HostIcpQatFile `
                           -Force `
                           -Confirm:$false | out-null
 
-                Get-Item -Path $TraceLogOpts.Host.IcpQat.EtlFullPath | Remove-Item -Recurse | out-null
+                Get-Item -Path $TraceLogOpts.EtlFullPath.IcpQat | Remove-Item -Recurse | out-null
             }
         }
 
