@@ -417,6 +417,7 @@ function HV-VMSwitchCreate
 {
     $ReturnValue = $VMSwitch_Name_Internal
 
+    <#
     # Remove all netnats
     $GetNetNatError = $null
     $GetNetNats = Get-NetNat `
@@ -431,6 +432,7 @@ function HV-VMSwitchCreate
                 -ErrorAction Stop | Out-Null
         }
     }
+    #>
 
     $VMSwitchType = "Internal"
     $GetVMSwitchError = $null
