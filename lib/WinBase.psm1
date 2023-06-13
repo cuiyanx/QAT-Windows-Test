@@ -204,6 +204,14 @@ function WBase-HostDeviceInit
             Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 8")
             return $false
         }
+    } elseif ($LocationInfo.FriendlyName -eq "Intel(R) 401xx Accelerator*") {
+        $LocationInfo.QatType = "QAT20"
+        $LocationInfo.IcpQatName = "icp_qat4"
+
+        if ($LocationInfo.PF.Number -lt 4) {
+            Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 4")
+            return $false
+        }
     } else {
         Win-DebugTimestamp -output ("Host: Can not get the friendly name")
         return $false
