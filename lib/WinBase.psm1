@@ -162,10 +162,10 @@ function WBase-HostDeviceInit
         $SocketNumber = 1
     } elseif ($SocketArrayType.Name -eq "Object[]") {
         $SocketNumber = [int]($SocketArray.length)
-    } else (
+    } else {
         Win-DebugTimestamp -output ("Host: Can not get the socket number of CPU")
         return $false
-    )
+    }
     Win-DebugTimestamp -output ("Host: Get the socket number of CPU > {0}" -f $SocketNumber)
 
     ForEach ($FriendlyName in $FriendlyNames) {
