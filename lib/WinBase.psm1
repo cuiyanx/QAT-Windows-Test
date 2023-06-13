@@ -156,6 +156,18 @@ function WBase-HostDeviceInit
     $LocationInfo.QatType = $null
     $LocationInfo.IcpQatName = $null
 
+    $SocketArray = Get-CimInstance -ClassName win32_processor
+    $SocketArrayType = $SocketArray.gettype()
+    if ($SocketArrayType.Name -eq "CimInstance") {
+        $SocketNumber = 1
+    } elseif ($SocketArrayType.Name -eq "Object[]") {
+        $SocketNumber = [int]($SocketArray.length)
+    } else (
+        Win-DebugTimestamp -output ("Host: Can not get the socket number of CPU")
+        return $false
+    )
+    Win-DebugTimestamp -output ("Host: Get the socket number of CPU > {0}" -f $SocketNumber)
+
     ForEach ($FriendlyName in $FriendlyNames) {
         $devCount = 0
         $PnpDeviceError = $null
@@ -183,37 +195,26 @@ function WBase-HostDeviceInit
     if ($LocationInfo.FriendlyName -eq "Intel(R) C62x Accelerator*") {
         $LocationInfo.QatType = "QAT17"
         $LocationInfo.IcpQatName = "icp_qat"
-
-        if ($LocationInfo.PF.Number -lt 3) {
-            Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 3")
-            return $false
-        }
+        $PFNumber = $SocketNumber * 3
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) C4xxx Accelerator*") {
         $LocationInfo.QatType = "QAT18"
         $LocationInfo.IcpQatName = "icp_qat"
-
-        if ($LocationInfo.PF.Number -lt 1) {
-            Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 1")
-            return $false
-        }
+        $PFNumber = $SocketNumber
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) 4xxx Accelerator*") {
         $LocationInfo.QatType = "QAT20"
         $LocationInfo.IcpQatName = "icp_qat4"
-
-        if ($LocationInfo.PF.Number -lt 8) {
-            Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 8")
-            return $false
-        }
+        $PFNumber = $SocketNumber * 4
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) 401xx Accelerator*") {
         $LocationInfo.QatType = "QAT20"
         $LocationInfo.IcpQatName = "icp_qat4"
-
-        if ($LocationInfo.PF.Number -lt 4) {
-            Win-DebugTimestamp -output ("Host: The number of QAT devices is not less than 4")
-            return $false
-        }
+        $PFNumber = $SocketNumber * 2
     } else {
         Win-DebugTimestamp -output ("Host: Can not get the friendly name")
+        return $false
+    }
+
+    if ($LocationInfo.PF.Number -ne $PFNumber) {
+        Win-DebugTimestamp -output ("Host: The number of QAT devices is not equal to {0}" -f $PFNumber)
         return $false
     }
 
