@@ -66,7 +66,8 @@ or
 	-DriverPath <Path of QAT driver> `
 	-TestName <Name of test case> `
 	-Iteration <Iteration of test case> `
-	-InitVM $true
+	-InitVM $true `
+    -DebugMode $false
 ```
 
 ```shell
