@@ -534,6 +534,8 @@ try {
                                         $ecccurve
                                 }
 
+                                $testName = "{0}_{1}" -f $testName, $TestType
+
                                 if ($CompareFlag) {
                                     $TestCaseResultsList = [hashtable] @{
                                         tc = $testName
@@ -1036,6 +1038,83 @@ try {
                                             e = $CNGTestResult.error
                                             testOps = $CNGTestResult.testOps
                                             banckmarkOps = $CNGTestResult.banckmarkOps
+                                        }
+
+                                        WBase-WriteTestResult -TestResult $TestCaseResultsList
+                                    }
+                                }
+                            }
+
+                            if (($SmokeTestCNGTestType -eq "Heartbeat") -or
+                                ($SmokeTestCNGTestType -eq "Disable")) {
+                                $testNameHeader = "SmokeTest_WTW_{0}_{1}_{2}_Fallback_qa" -f
+                                    $LocationInfo.QatType,
+                                    $UQString,
+                                    $VMVFOSConfig
+
+                                if ($SmokeTestCNGTestType -eq "Heartbeat") {$TestType = "heartbeat"}
+                                if ($SmokeTestCNGTestType -eq "Disable") {$TestType = "disable"}
+                                Foreach ($CNGtestConfig in $CNGtestConfigs) {
+                                    if ($CNGtestConfig.Algo -eq "rsa") {
+                                        $keyLength = $CNGtestConfig.keyLength
+                                        $ecccurve = "nistP256"
+                                        $padding = $CNGtestConfig.Padding
+
+                                        $testName = "{0}_{1}_{2}_{3}_{4}" -f
+                                            $testNameHeader,
+                                            $CNGtestConfig.Algo,
+                                            $CNGtestConfig.Operation,
+                                            $keyLength,
+                                            $padding
+                                    } else {
+                                        $keyLength = 2048
+                                        $ecccurve = $CNGtestConfig.Ecccurve
+                                        $padding = "pkcs1"
+
+                                        $testName = "{0}_{1}_{2}_{3}" -f
+                                            $testNameHeader,
+                                            $CNGtestConfig.Algo,
+                                            $CNGtestConfig.Operation,
+                                            $ecccurve
+                                    }
+
+                                    $testName = "{0}_{1}" -f $testName, $TestType
+
+                                    if ($CompareFlag) {
+                                        $TestCaseResultsList = [hashtable] @{
+                                            tc = $testName
+                                            s = $TestResultToBerta.NotRun
+                                            e = "no_error"
+                                        }
+
+                                        WBase-WriteTestResult `
+                                            -TestResult $TestCaseResultsList `
+                                            -ResultFile $CompareFile
+                                    } else {
+                                        $CNGTestResult = WTW-CNGTestSWfallback `
+                                            -TestVmOpts $TestVmOpts `
+                                            -algo $CNGtestConfig.Algo `
+                                            -operation $CNGtestConfig.Operation `
+                                            -provider $CNGtestProvider `
+                                            -keyLength $keyLength `
+                                            -padding $padding `
+                                            -ecccurve $ecccurve `
+                                            -numThreads $CNGtestnumThreads `
+                                            -numIter $CNGtestnumIter `
+                                            -TestPathName $CNGtestTestPathName `
+                                            -BertaResultPath $BertaResultPath `
+                                            -TestType $TestType
+
+                                        if ($CNGTestResult.result) {
+                                            $CNGTestResult.result = $TestResultToBerta.Pass
+                                        } else {
+                                            $CNGTestResult.result = $TestResultToBerta.Fail
+                                        }
+
+                                        $TestCaseResultsList = [hashtable] @{
+                                            tc = $testName
+                                            s = $CNGTestResult.result
+                                            e = $CNGTestResult.error
                                         }
 
                                         WBase-WriteTestResult -TestResult $TestCaseResultsList
