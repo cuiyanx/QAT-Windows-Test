@@ -30,18 +30,18 @@ VF VF-driver-path\\QAT2.0.W.2.0.0-00538
 ### run test suite
 ```sh
 .\<name of powershell script>.ps1 `
-	-BertaResultPath <Path of test result> `
-	-DriverPath <Path of QAT driver> `
-	-RunOnLocal $true
+    -BertaResultPath <Path of test result> `
+    -DriverPath <Path of QAT driver> `
+    -RunOnLocal $true
 ```
 or
 ### run single test case
 ```sh
 .\<name of powershell script>.ps1 `
-	-BertaResultPath <Path of test result> `
-	-DriverPath <Path of QAT driver> `
-	-runTestCase <Name of test case> `
-	-RunOnLocal $true
+    -BertaResultPath <Path of test result> `
+    -DriverPath <Path of QAT driver> `
+    -runTestCase <Name of test case> `
+    -RunOnLocal $true
 ```
 
 ```shell
@@ -62,11 +62,11 @@ or
 ## Run single test case with multiple rounds
 ```sh
 .\Win_Single_test.ps1 `
-	-BertaResultPath <Path of test result> `
-	-DriverPath <Path of QAT driver> `
-	-TestName <Name of test case> `
-	-Iteration <Iteration of test case> `
-	-InitVM $true `
+    -BertaResultPath <Path of test result> `
+    -DriverPath <Path of QAT driver> `
+    -TestName <Name of test case> `
+    -Iteration <Iteration of test case> `
+    -InitVM $true `
     -DebugMode $false
 ```
 
