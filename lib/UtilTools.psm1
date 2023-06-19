@@ -516,21 +516,25 @@ function UTSetBCDEDITValue
         [Parameter(Mandatory=$True)]
         [bool]$Remote,
 
-        [object]$Session = $null
+        [object]$Session = $null,
+
+        [string]$TargetPlaform = "current"
     )
 
     $ReturnValue = $false
 
     if ($Remote) {
         $SetStatusLog = Invoke-Command -Session $Session -ScriptBlock {
-            Param($BCDEDITKey, $BCDEDITValue)
-            bcdedit -set $BCDEDITKey $BCDEDITValue
-        } -ArgumentList $BCDEDITKey, $BCDEDITValue
+            Param($BCDEDITKey, $BCDEDITValue, $TargetPlaform)
+            $Platform = "{{0}}" -f $TargetPlaform
+            bcdedit -set $Platform $BCDEDITKey $BCDEDITValue
+        } -ArgumentList $BCDEDITKey, $BCDEDITValue, $TargetPlaform
     } else {
         $SetStatusLog = Invoke-Command -ScriptBlock {
-            Param($BCDEDITKey, $BCDEDITValue)
-            bcdedit -set $BCDEDITKey $BCDEDITValue
-        } -ArgumentList $BCDEDITKey, $BCDEDITValue
+            Param($BCDEDITKey, $BCDEDITValue, $TargetPlaform)
+            $Platform = "{{0}}" -f $TargetPlaform
+            bcdedit -set $Platform $BCDEDITKey $BCDEDITValue
+        } -ArgumentList $BCDEDITKey, $BCDEDITValue, $TargetPlaform
     }
 
     ($SetStatusLog -replace "\s{2,}", " ") | ForEach-Object {
@@ -551,51 +555,55 @@ function UTGetBCDEDITValue
         [Parameter(Mandatory=$True)]
         [bool]$Remote,
 
-        [object]$Session = $null
+        [object]$Session = $null,
+
+        [string]$TargetPlaform = "current"
     )
 
     $ReturnValue = $null
 
     if ($Remote) {
         $GetStatusLog = Invoke-Command -Session $Session -ScriptBlock {
-            Param($BCDEDITKey)
+            Param($BCDEDITKey, $TargetPlaform)
             $CurrentFlag = $false
             $ReturnValue = $null
             bcdedit | ForEach-Object {
-                if (($_ -match "identifier") -and ($_ -match "current")) {
+                if (($_ -match "identifier") -and ($_ -match $TargetPlaform)) {
                     $CurrentFlag = $true
                 }
 
                 if ($CurrentFlag) {
                     if ($_ -match $BCDEDITKey) {
                         $ReturnValue = $_
-                        $CurrentFlag = $false
                     }
                 }
+
+                if ($_ -match "-------") {$CurrentFlag = $false}
             }
 
             return $ReturnValue
-        } -ArgumentList $BCDEDITKey
+        } -ArgumentList $BCDEDITKey, $TargetPlaform
     } else {
         $GetStatusLog = Invoke-Command -ScriptBlock {
-            Param($BCDEDITKey)
+            Param($BCDEDITKey, $TargetPlaform)
             $CurrentFlag = $false
             $ReturnValue = $null
             bcdedit | ForEach-Object {
-                if (($_ -match "identifier") -and ($_ -match "current")) {
+                if (($_ -match "identifier") -and ($_ -match $TargetPlaform)) {
                     $CurrentFlag = $true
                 }
 
                 if ($CurrentFlag) {
                     if ($_ -match $BCDEDITKey) {
                         $ReturnValue = $_
-                        $CurrentFlag = $false
                     }
                 }
+
+                if ($_ -match "-------") {$CurrentFlag = $false}
             }
 
             return $ReturnValue
-        } -ArgumentList $BCDEDITKey
+        } -ArgumentList $BCDEDITKey, $TargetPlaform
     }
 
     if (-not [String]::IsNullOrEmpty($GetStatusLog)) {
