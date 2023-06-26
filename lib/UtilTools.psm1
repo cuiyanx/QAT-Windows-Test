@@ -383,15 +383,6 @@ function UT-SetDriverVerifier
 
     if ($Remote) {
         $LogKeyWord = $Session.Name
-    } else {
-        $LogKeyWord = "Host"
-    }
-
-    Win-DebugTimestamp -output (
-        "{0}: Set driver verifier > {1}" -f $LogKeyWord, $DriverVerifier
-    )
-
-    if ($Remote) {
         $RemoteReturnValue = Invoke-Command -Session $Session -ScriptBlock {
             Param($DriverVerifierArgs, $DriverVerifier)
             $VerifierReturn = $false
@@ -412,6 +403,7 @@ function UT-SetDriverVerifier
 
         $ReturnValue = $RemoteReturnValue
     } else {
+        $LogKeyWord = "Host"
         if ($DriverVerifier) {
             $VerifierCommand = "{0} {1} {2}" -f
                 $DriverVerifierArgs.ExePath,
@@ -428,6 +420,16 @@ function UT-SetDriverVerifier
             if ($_ -match $DriverVerifierArgs.SuccessLog) {$ReturnValue = $true}
             if ($_ -match $DriverVerifierArgs.NoChangeLog) {$ReturnValue = $true}
         }
+    }
+
+    if ($ReturnValue) {
+        Win-DebugTimestamp -output (
+            "{0}: Set driver verifier as {1} is successful" -f $LogKeyWord, $DriverVerifier
+        )
+    } else {
+        Win-DebugTimestamp -output (
+            "{0}: Set driver verifier as {1} is unsuccessful" -f $LogKeyWord, $DriverVerifier
+        )
     }
 
     return $ReturnValue
@@ -629,24 +631,36 @@ function UT-SetDebugMode
     $SetValue = ($DebugMode) ? "ON" : "OFF"
 
     if ($Remote) {
-        Win-DebugTimestamp -output (
-            "{0}: Set Debug mode > {1}" -f $Session.Name, $DebugMode
-        )
-
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote `
             -Session $Session
-    } else {
-        Win-DebugTimestamp -output (
-            "Host: Set Debug mode > {0}" -f $DebugMode
-        )
 
+        if ($ReturnValue) {
+            Win-DebugTimestamp -output (
+                "{0}: Set Debug mode as {1} is successful" -f $Session.Name, $DebugMode
+            )
+        } else {
+            Win-DebugTimestamp -output (
+                "{0}: Set Debug mode as {1} is unsuccessful" -f $Session.Name, $DebugMode
+            )
+        }
+    } else {
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote
+
+        if ($ReturnValue) {
+            Win-DebugTimestamp -output (
+                "Host: Set Debug mode as {0} is successful" -f $DebugMode
+            )
+        } else {
+            Win-DebugTimestamp -output (
+                "Host: Set Debug mode as {0} is unsuccessful" -f $DebugMode
+            )
+        }
     }
 
     return $ReturnValue
@@ -723,24 +737,36 @@ function UT-SetTestMode
     $SetValue = ($TestMode) ? "ON" : "OFF"
 
     if ($Remote) {
-        Win-DebugTimestamp -output (
-            "{0}: Set Test mode > {1}" -f $Session.Name, $TestMode
-        )
-
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote `
             -Session $Session
-    } else {
-        Win-DebugTimestamp -output (
-            "Host: Set Test mode > {0}" -f $TestMode
-        )
 
+        if ($ReturnValue) {
+            Win-DebugTimestamp -output (
+                "{0}: Set Test mode as {1} is successful" -f $Session.Name, $TestMode
+            )
+        } else {
+            Win-DebugTimestamp -output (
+                "{0}: Set Test mode as {1} is unsuccessful" -f $Session.Name, $TestMode
+            )
+        }
+    } else {
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote
+
+        if ($ReturnValue) {
+            Win-DebugTimestamp -output (
+                "Host: Set Test mode as {0} is successful" -f $TestMode
+            )
+        } else {
+            Win-DebugTimestamp -output (
+                "Host: Set Test mode as {0} is unsuccessful" -f $TestMode
+            )
+        }
     }
 
     return $ReturnValue
@@ -813,16 +839,6 @@ function UT-SetUQMode
 
     $ReturnValue = $true
 
-    if ($Remote) {
-        $LogKeyWord = $Session.Name
-    } else {
-        $LogKeyWord = "Host"
-    }
-
-    Win-DebugTimestamp -output (
-        "{0}: Set UQ mode > {1}" -f $LogKeyWord, $UQMode
-    )
-
     $regeditKey = "HKLM:\SYSTEM\CurrentControlSet\Services\icp_qat4\UQ"
     $SetUQValue = ($UQMode) ? 1 : 0
     $SetFlag = $false
@@ -868,6 +884,16 @@ function UT-SetUQMode
         }
     } else {
         Win-DebugTimestamp -output ("{0}: The UQ key is not exist, no need to set" -f $LogKeyWord)
+    }
+
+    if ($ReturnValue) {
+        Win-DebugTimestamp -output (
+            "{0}: Set UQ mode as {1} is successful" -f $LogKeyWord, $UQMode
+        )
+    } else {
+        Win-DebugTimestamp -output (
+            "{0}: Set UQ mode as {1} is unsuccessful" -f $LogKeyWord, $UQMode
+        )
     }
 
     return $ReturnValue
