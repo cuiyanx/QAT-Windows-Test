@@ -516,25 +516,21 @@ function UTSetBCDEDITValue
         [Parameter(Mandatory=$True)]
         [bool]$Remote,
 
-        [object]$Session = $null,
-
-        [string]$TargetPlaform = "current"
+        [object]$Session = $null
     )
 
     $ReturnValue = $false
 
     if ($Remote) {
         $SetStatusLog = Invoke-Command -Session $Session -ScriptBlock {
-            Param($BCDEDITKey, $BCDEDITValue, $TargetPlaform)
-            $Platform = "{{0}}" -f $TargetPlaform
-            bcdedit -set $Platform $BCDEDITKey $BCDEDITValue
-        } -ArgumentList $BCDEDITKey, $BCDEDITValue, $TargetPlaform
+            Param($BCDEDITKey, $BCDEDITValue)
+            bcdedit -set $BCDEDITKey $BCDEDITValue
+        } -ArgumentList $BCDEDITKey, $BCDEDITValue
     } else {
         $SetStatusLog = Invoke-Command -ScriptBlock {
-            Param($BCDEDITKey, $BCDEDITValue, $TargetPlaform)
-            $Platform = "{{0}}" -f $TargetPlaform
-            bcdedit -set $Platform $BCDEDITKey $BCDEDITValue
-        } -ArgumentList $BCDEDITKey, $BCDEDITValue, $TargetPlaform
+            Param($BCDEDITKey, $BCDEDITValue)
+            bcdedit -set $BCDEDITKey $BCDEDITValue
+        } -ArgumentList $BCDEDITKey, $BCDEDITValue
     }
 
     ($SetStatusLog -replace "\s{2,}", " ") | ForEach-Object {
