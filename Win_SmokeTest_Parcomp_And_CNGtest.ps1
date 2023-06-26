@@ -512,6 +512,18 @@ try {
                             if ($SmokeTestCNGTestType -eq "Disable") {$TestType = "disable"}
                             Foreach ($CNGtestConfig in $CNGtestConfigs) {
                                 if ($CNGtestConfig.Algo -eq "rsa") {
+                                    if ($CNGtestConfig.Padding -ne "oaep") {
+                                        continue
+                                    }
+                                } elseif ($CNGtestConfig.Algo -eq "ecdh") {
+                                    if ($CNGtestConfig.Operation -ne "secretagreement") {
+                                        continue
+                                    }
+                                } else {
+                                    continue
+                                }
+
+                                if ($CNGtestConfig.Algo -eq "rsa") {
                                     $keyLength = $CNGtestConfig.keyLength
                                     $ecccurve = "nistP256"
                                     $padding = $CNGtestConfig.Padding
@@ -1055,6 +1067,18 @@ try {
                                 if ($SmokeTestCNGTestType -eq "Heartbeat") {$TestType = "heartbeat"}
                                 if ($SmokeTestCNGTestType -eq "Disable") {$TestType = "disable"}
                                 Foreach ($CNGtestConfig in $CNGtestConfigs) {
+                                    if ($CNGtestConfig.Algo -eq "rsa") {
+                                        if ($CNGtestConfig.Padding -ne "oaep") {
+                                            continue
+                                        }
+                                    } elseif ($CNGtestConfig.Algo -eq "ecdh") {
+                                        if ($CNGtestConfig.Operation -ne "secretagreement") {
+                                            continue
+                                        }
+                                    } else {
+                                        continue
+                                    }
+
                                     if ($CNGtestConfig.Algo -eq "rsa") {
                                         $keyLength = $CNGtestConfig.keyLength
                                         $ecccurve = "nistP256"
