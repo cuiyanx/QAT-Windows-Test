@@ -631,36 +631,28 @@ function UT-SetDebugMode
     $SetValue = ($DebugMode) ? "ON" : "OFF"
 
     if ($Remote) {
+        $LogKeyWord = $Session.Name
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote `
             -Session $Session
-
-        if ($ReturnValue) {
-            Win-DebugTimestamp -output (
-                "{0}: Set Debug mode as {1} is successful" -f $Session.Name, $DebugMode
-            )
-        } else {
-            Win-DebugTimestamp -output (
-                "{0}: Set Debug mode as {1} is unsuccessful" -f $Session.Name, $DebugMode
-            )
-        }
     } else {
+        $LogKeyWord = "Host"
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote
+    }
 
-        if ($ReturnValue) {
-            Win-DebugTimestamp -output (
-                "Host: Set Debug mode as {0} is successful" -f $DebugMode
-            )
-        } else {
-            Win-DebugTimestamp -output (
-                "Host: Set Debug mode as {0} is unsuccessful" -f $DebugMode
-            )
-        }
+    if ($ReturnValue) {
+        Win-DebugTimestamp -output (
+            "{0}: Set Debug mode as {1} is successful" -f $LogKeyWord, $DebugMode
+        )
+    } else {
+        Win-DebugTimestamp -output (
+            "{0}: Set Debug mode as {1} is unsuccessful" -f $LogKeyWord, $DebugMode
+        )
     }
 
     return $ReturnValue
@@ -737,36 +729,28 @@ function UT-SetTestMode
     $SetValue = ($TestMode) ? "ON" : "OFF"
 
     if ($Remote) {
+        $LogKeyWord = $Session.Name
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote `
             -Session $Session
-
-        if ($ReturnValue) {
-            Win-DebugTimestamp -output (
-                "{0}: Set Test mode as {1} is successful" -f $Session.Name, $TestMode
-            )
-        } else {
-            Win-DebugTimestamp -output (
-                "{0}: Set Test mode as {1} is unsuccessful" -f $Session.Name, $TestMode
-            )
-        }
     } else {
+        $LogKeyWord = "Host"
         $ReturnValue = UTSetBCDEDITValue `
             -BCDEDITKey $SetKey `
             -BCDEDITValue $SetValue `
             -Remote $Remote
+    }
 
-        if ($ReturnValue) {
-            Win-DebugTimestamp -output (
-                "Host: Set Test mode as {0} is successful" -f $TestMode
-            )
-        } else {
-            Win-DebugTimestamp -output (
-                "Host: Set Test mode as {0} is unsuccessful" -f $TestMode
-            )
-        }
+    if ($ReturnValue) {
+        Win-DebugTimestamp -output (
+            "{0}: Set Test mode as {1} is successful" -f $LogKeyWord, $TestMode
+        )
+    } else {
+        Win-DebugTimestamp -output (
+            "{0}: Set Test mode as {1} is unsuccessful" -f $LogKeyWord, $TestMode
+        )
     }
 
     return $ReturnValue
