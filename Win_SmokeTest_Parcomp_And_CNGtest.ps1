@@ -79,18 +79,6 @@ try {
             Algo = "rsa"
             keyLength = 2048
             Operation = "encrypt"
-            Padding = "pkcs1"
-        },
-        [hashtable] @{
-            Algo = "rsa"
-            keyLength = 2048
-            Operation = "decrypt"
-            Padding = "pkcs1"
-        },
-        [hashtable] @{
-            Algo = "rsa"
-            keyLength = 2048
-            Operation = "encrypt"
             Padding = "oaep"
         },
         [hashtable] @{
@@ -98,18 +86,6 @@ try {
             keyLength = 2048
             Operation = "decrypt"
             Padding = "oaep"
-        },
-                [hashtable] @{
-            Algo = "rsa"
-            keyLength = 2048
-            Operation = "encrypt"
-            Padding = "pss"
-        },
-        [hashtable] @{
-            Algo = "rsa"
-            keyLength = 2048
-            Operation = "decrypt"
-            Padding = "pss"
         },
         [hashtable] @{
             Algo = "ecdh"
