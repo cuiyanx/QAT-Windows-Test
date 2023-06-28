@@ -51,6 +51,7 @@ function WBase-ReturnFilesInit
 
     Set-Variable -Name "WinPowerShellLogFile" -Value ("{0}\\STVTest-ps.log" -f $BertaResultPath) -Scope global
     Set-Variable -Name "WinTestResultFile" -Value ("{0}\\{1}" -f $BertaResultPath, $ResultFile) -Scope global
+    Set-Variable -Name "WinTestResultCsv" -Value ("{0}\\result.csv" -f $BertaResultPath) -Scope global
     $LocationInfo.WriteLogToFile = $true
 
     if (Test-Path -Path $WinPowerShellLogFile) {
@@ -82,6 +83,21 @@ function WBase-ReturnFilesInit
         Get-Item -Path $WinTestResultFile | Remove-Item -Recurse
     }
     New-Item -Path $BertaResultPath -Name $ResultFile -ItemType "file" | out-null
+
+    if (Test-Path -Path $WinTestResultCsv) {
+        for ($i = 0; $i -lt 1000; $i++) {
+            $WinResultCsvPath = Split-Path -Path $WinTestResultCsv
+            $WinResultCsvName = Split-Path -Path $WinTestResultCsv -Leaf
+            $WinResultCsvNameArray = $WinResultCsvName.split(".")
+            $WinResultCsv = "{0}{1}-{2}.{3}" -f $WinResultCsvPath, $WinResultCsvNameArray[0], $i, $WinResultCsvNameArray[1]
+            if (-not (Test-Path -Path $WinResultCsv)) {
+                break
+            }
+        }
+        Copy-Item -Path $WinTestResultCsv -Destination $WinResultCsv
+        Get-Item -Path $WinTestResultCsv | Remove-Item -Recurse
+    }
+    New-Item -Path $BertaResultPath -Name "result.csv" -ItemType "file" | out-null
 }
 
 function WBase-WriteTestResult
@@ -109,6 +125,37 @@ function WBase-WriteTestResult
         Win-DebugTimestamp -output ("-------------------------------------------------------------------------------------------------")
     }
 }
+
+function WBase-WriteResultCsv
+{
+    Param(
+         [Parameter(Mandatory=$True)]
+         [array]$ReadMessagePath = $null
+    )
+
+    if ($ReadMessagePath -ne $null) {
+        $ReadMessagePath | ForEach {
+           $ReadMessageCommand = "Get-Content {0}" -f $_
+           $ReadResult = Invoke-Expression $ReadMessageCommand
+           Start-Sleep -Seconds 30
+           if ($ReadResult -ne $null){
+               $CaseNumber = 1
+               $ReadResult | ForEach {
+                  $JasonTest = ConvertFrom-Json -InputObject $_ -AsHashtable
+                  $HandelTestCase = $JasonTest.tc
+                  $HandelTestResult = $JasonTest.s
+                  [PsCustomObject]@{
+                     TestNumber = $CaseNumber
+                     TestCase = $HandelTestCase
+                     TestResult = $HandelTestResult
+                  }
+                  $CaseNumber = $CaseNumber + 1
+               } | Export-Csv -Path $WinTestResultCsv -NoTypeInformation
+           }
+        }
+    }
+}
+
 
 function WBase-CompareTestResult
 {
@@ -145,6 +192,9 @@ function WBase-CompareTestResult
             -Confirm:$false `
             -ErrorAction Stop | out-null
     }
+
+    # Generate result.csv file
+    WBase-WriteResultCsv -ReadMessagePath $WinTestResultFile
 }
 
 function WBase-HostDeviceInit

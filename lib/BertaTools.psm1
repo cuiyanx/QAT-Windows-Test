@@ -208,6 +208,7 @@ function Berta-CompressReturnFiles
         "job_2_log.txt",
         "STVTest-ps.log",
         "result.log",
+        "result.csv",
         "results-log.txt"
     )
 
