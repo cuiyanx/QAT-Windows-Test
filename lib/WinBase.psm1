@@ -2266,7 +2266,7 @@ function WBase-CheckQatDevice
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [bool]$Remote
+        [bool]$Remote,
 
         [object]$Session = $null,
 
