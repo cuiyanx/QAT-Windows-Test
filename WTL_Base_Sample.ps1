@@ -62,10 +62,22 @@ try {
 
     # Special: For All
     if ([String]::IsNullOrEmpty($VMVFOSConfigs)) {
-        [System.Array]$VMVFOSConfigs = (
-            "2vm_32vf_ubuntu2004",
-            "1vm_64vf_ubuntu2004"
-        )
+        if ($LocationInfo.QatType -eq "QAT20") {
+            [System.Array]$VMVFOSConfigs = (
+                "3vm_8vf_ubuntu2004",
+                "2vm_64vf_ubuntu2004"
+            )
+        } elseif ($LocationInfo.QatType -eq "QAT17") {
+            [System.Array]$VMVFOSConfigs = (
+                "3vm_3vf_ubuntu2004",
+                "1vm_48vf_ubuntu2004"
+            )
+        } elseif ($LocationInfo.QatType -eq "QAT18") {
+            [System.Array]$VMVFOSConfigs = (
+                "2vm_32vf_ubuntu2004",
+                "1vm_64vf_ubuntu2004"
+            )
+        }
     }
 
     Foreach ($VMVFOSConfig in $VMVFOSConfigs) {
