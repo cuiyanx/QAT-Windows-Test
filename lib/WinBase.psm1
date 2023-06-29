@@ -156,7 +156,6 @@ function WBase-WriteResultCsv
     }
 }
 
-
 function WBase-CompareTestResult
 {
     Param(
@@ -2263,6 +2262,58 @@ function WBase-CheckTestOps
 }
 
 # About SWFallback test
+function WBase-CheckQatDevice
+{
+    Param(
+        [Parameter(Mandatory=$True)]
+        [bool]$Remote
+
+        [object]$Session = $null,
+
+        [string]$CheckStatus = $null
+    )
+
+    $ReturnValue = [hashtable] @{
+        result = $true
+        number = 0
+        list = [System.Array] @()
+    }
+
+    if ($Remote) {
+        $CheckNumber = $LocationInfo.VF.Number
+        $ReturnValue.list = Invoke-Command -Session $Session -ScriptBlock {
+            Param($LocationInfo)
+            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+        } -ArgumentList $LocationInfo
+    } else {
+        $CheckNumber = $LocationInfo.PF.Number
+        $ReturnValue.list = Invoke-Command -ScriptBlock {
+            Param($LocationInfo)
+            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+        } -ArgumentList $LocationInfo
+    }
+
+    $ReturnValue.list | ForEach-Object {
+        if ([String]::IsNullOrEmpty($CheckStatus)) {
+            $ReturnValue.number += 1
+        } else {
+            if ($_.Status -eq $CheckStatus) {
+                $ReturnValue.number += 1
+            }
+        }
+    }
+
+    if ($ReturnValue.number -eq 0) {
+        $ReturnValue.result = $false
+    } else {
+        if ($ReturnValue.number -ne $CheckNumber) {
+            $ReturnValue.result = $false
+        }
+    }
+
+    return $ReturnValue
+}
+
 function WBase-EnableAndDisableQatDevice
 {
     Param(
@@ -2283,50 +2334,54 @@ function WBase-EnableAndDisableQatDevice
         $LogKeyWord = "Host"
     }
 
-    $PNPCheckflag = $true
+    $ReturnValue = $true
 
     # disable qat device
     if ($Disable) {
-        $deviceNumber = 0
-
         if ($Remote) {
-            $deviceList = Invoke-Command -Session $Session -ScriptBlock {
-                                                                          Param($LocationInfo)
-                                                                          Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
-                                                                          } -ArgumentList $LocationInfo
+            $CheckResult = WBase-CheckQatDevice `
+                -Remote $Remote `
+                -Session $Session `
+                -CheckStatus "OK"
         } else {
-            $deviceList = Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+            $CheckResult = WBase-CheckQatDevice `
+                -Remote $Remote `
+                -CheckStatus "OK"
         }
 
-        $deviceList | ForEach-Object {
-            if ($_.Status -eq "OK") {
-                $deviceNumber += 1
-            }
-        }
+        Win-DebugTimestamp -output (
+            "{0}: The number of qat device that need to disable > {1}" -f
+                $LogKeyWord,
+                $CheckResult.number
+        )
 
-        Win-DebugTimestamp -output ("{0}: The number of qat device that need to disable > {1}" -f $LogKeyWord, $deviceNumber)
-        $deviceList | ForEach-Object {
-            if ($_.Status -eq "OK") {
-                Win-DebugTimestamp -output ("{0}: Disable qat device > {1}" -f $LogKeyWord, $_.InstanceId)
+        if ($CheckResult) {
+            $CheckResult.list | ForEach-Object {
+                Win-DebugTimestamp -output (
+                    "{0}: Disable qat device > {1}" -f $LogKeyWord, $_.InstanceId
+                )
+
                 if ($Remote) {
                     $PNPOperationResult = Invoke-Command -Session $Session -ScriptBlock {
-                                                                                          Param($_)
-                                                                                          $PNPdeviceJob = Start-Job -ScriptBlock {
-                                                                                              Param($_)
-                                                                                              Disable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
-                                                                                          } -ArgumentList $_
-                                                                                          $PNPdeviceJob | Wait-Job -Timeout 600
-                                                                                          if ($PNPdeviceJob.State -ne "Completed") {
-                                                                                              $PNPdeviceJob | Stop-Job | Remove-Job
-                                                                                              return $false
-                                                                                          }
-                                                                                          $PNPDevice = Get-PnpDevice -InstanceId $_.InstanceId
-                                                                                          if ($PNPDevice.Status -eq "Error") {
-                                                                                              return $true
-                                                                                          } else {
-                                                                                              return $false
-                                                                                          }
-                                                                                          } -ArgumentList $_
+                        Param($_)
+                        $PNPdeviceJob = Start-Job -ScriptBlock {
+                            Param($_)
+                            Disable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
+                        } -ArgumentList $_
+
+                        $PNPdeviceJob | Wait-Job -Timeout 600
+                        if ($PNPdeviceJob.State -ne "Completed") {
+                            $PNPdeviceJob | Stop-Job | Remove-Job
+                            return $false
+                        }
+
+                        $PNPDevice = Get-PnpDevice -InstanceId $_.InstanceId
+                        if ($PNPDevice.Status -eq "Error") {
+                            return $true
+                        } else {
+                            return $false
+                        }
+                    } -ArgumentList $_
                 } else {
                     $PNPOperationResult = $false
                     $PNPdeviceJob = Start-Job -ScriptBlock {
@@ -2334,7 +2389,7 @@ function WBase-EnableAndDisableQatDevice
                         Disable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
                     } -ArgumentList $_
 
-                    $PNPdeviceJob | Wait-Job -Timeout 500 | out-null
+                    $PNPdeviceJob | Wait-Job -Timeout 600 | out-null
 
                     if ($PNPdeviceJob.State -ne "Completed") {
                         $PNPdeviceJob | Stop-Job | Remove-Job | out-null
@@ -2351,60 +2406,74 @@ function WBase-EnableAndDisableQatDevice
                     }
                 }
 
-                if (!($PNPOperationResult)) {
+                if (-not $PNPOperationResult) {
                     Win-DebugTimestamp -output ("{0}: Disable qat device is failed" -f $LogKeyWord)
-                    $PNPCheckflag = $false
+                    if ($ReturnValue) {
+                        $ReturnValue = $false
+                    }
                 }
             }
-        }
 
-        if ($Wait) {
-            Start-Sleep -Seconds 30
+            if ($Wait) {
+                Start-Sleep -Seconds 30
+            }
+        } else {
+            Win-DebugTimestamp -output (
+                "{0}: The number of qat device is incorrect, skp disable operation" -f $LogKeyWord
+            )
+
+            if ($ReturnValue) {
+                $ReturnValue = $false
+            }
         }
     }
 
     # enable qat device
     if ($Enable) {
-        $deviceNumber = 0
-
         if ($Remote) {
-            $deviceList = Invoke-Command -Session $Session -ScriptBlock {
-                                                                          Param($LocationInfo)
-                                                                          Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
-                                                                          } -ArgumentList $LocationInfo
+            $CheckResult = WBase-CheckQatDevice `
+                -Remote $Remote `
+                -Session $Session `
+                -CheckStatus "Error"
         } else {
-            $deviceList = Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+            $CheckResult = WBase-CheckQatDevice `
+                -Remote $Remote `
+                -CheckStatus "Error"
         }
 
-        $deviceList | ForEach-Object {
-            if ($_.Status -eq "Error") {
-                $deviceNumber += 1
-            }
-        }
+        Win-DebugTimestamp -output (
+            "{0}: The number of qat device that need to enable > {1}" -f
+                $LogKeyWord,
+                $CheckResult.number
+        )
 
-        Win-DebugTimestamp -output ("{0}: The number of qat device that need to enable > {1}" -f $LogKeyWord, $deviceNumber)
-        $deviceList | ForEach-Object {
-            if ($_.Status -eq "Error") {
-                Win-DebugTimestamp -output ("{0}: Enable qat device > {1}" -f $LogKeyWord, $_.InstanceId)
+        if ($CheckResult) {
+            $CheckResult.list | ForEach-Object {
+                Win-DebugTimestamp -output (
+                    "{0}: Enable qat device > {1}" -f $LogKeyWord, $_.InstanceId
+                )
+
                 if ($Remote) {
                     $PNPOperationResult = Invoke-Command -Session $Session -ScriptBlock {
-                                                                                          Param($_)
-                                                                                          $PNPdeviceJob = Start-Job -ScriptBlock {
-                                                                                              Param($_)
-                                                                                              Enable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
-                                                                                          } -ArgumentList $_
-                                                                                          $PNPdeviceJob | Wait-Job -Timeout 500
-                                                                                          if ($PNPdeviceJob.State -ne "Completed") {
-                                                                                              $PNPdeviceJob | Stop-Job | Remove-Job
-                                                                                              return $false
-                                                                                          }
-                                                                                          $PNPDevice = Get-PnpDevice -InstanceId $_.InstanceId
-                                                                                          if ($PNPDevice.Status -eq "OK") {
-                                                                                              return $true
-                                                                                          } else {
-                                                                                              return $false
-                                                                                          }
-                                                                                          } -ArgumentList $_
+                        Param($_)
+                        $PNPdeviceJob = Start-Job -ScriptBlock {
+                            Param($_)
+                            Enable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
+                        } -ArgumentList $_
+
+                        $PNPdeviceJob | Wait-Job -Timeout 600
+                        if ($PNPdeviceJob.State -ne "Completed") {
+                            $PNPdeviceJob | Stop-Job | Remove-Job
+                            return $false
+                        }
+
+                        $PNPDevice = Get-PnpDevice -InstanceId $_.InstanceId
+                        if ($PNPDevice.Status -eq "OK") {
+                            return $true
+                        } else {
+                            return $false
+                        }
+                    } -ArgumentList $_
                 } else {
                     $PNPOperationResult = $false
                     $PNPdeviceJob = Start-Job -ScriptBlock {
@@ -2412,7 +2481,7 @@ function WBase-EnableAndDisableQatDevice
                         Enable-PnpDevice -InstanceId $_.InstanceId -confirm:$false
                     } -ArgumentList $_
 
-                    $PNPdeviceJob | Wait-Job -Timeout 500 | out-null
+                    $PNPdeviceJob | Wait-Job -Timeout 600 | out-null
 
                     if ($PNPdeviceJob.State -ne "Completed") {
                         $PNPdeviceJob | Stop-Job | Remove-Job | out-null
@@ -2429,19 +2498,29 @@ function WBase-EnableAndDisableQatDevice
                     }
                 }
 
-                if (!$PNPOperationResult) {
+                if (-not $PNPOperationResult) {
                     Win-DebugTimestamp -output ("{0}: Enable qat device is failed" -f $LogKeyWord)
-                    $PNPCheckflag = $false
+                    if ($ReturnValue) {
+                        $ReturnValue = $false
+                    }
                 }
             }
-        }
 
-        if ($Wait) {
-            Start-Sleep -Seconds 90
+            if ($Wait) {
+                Start-Sleep -Seconds 90
+            }
+        } else {
+            Win-DebugTimestamp -output (
+                "{0}: The number of qat device is incorrect, skp enable operation" -f $LogKeyWord
+            )
+
+            if ($ReturnValue) {
+                $ReturnValue = $false
+            }
         }
     }
 
-    return $PNPCheckflag
+    return $ReturnValue
 }
 
 function WBase-HeartbeatQatDevice
@@ -2451,41 +2530,66 @@ function WBase-HeartbeatQatDevice
         [string]$LogPath
     )
 
-    UT-TraceLogStart -Remote $false | out-null
+    $ReturnValue = $true
 
-    $HeartbeatTimes = 1
-    Win-DebugTimestamp -output ("Will heartbeat qat device {0} times" -f $HeartbeatTimes)
-    for ($it = 0; $it -lt $HeartbeatTimes; $it++) {
-        Win-DebugTimestamp -output ("The time of heartbeat qat device > {0}" -f ($it + 1))
-        for ($i = 0; $i -lt $LocationInfo.PF.Number; $i++) {
-            $AdfCtlArgs = ("query {0}" -f $i)
-            $AdfCtlOut = &$AdfCtlExe $AdfCtlArgs.split()
+    $CheckNumberResult = WBase-CheckQatDevice `
+        -Remote $false `
+        -CheckStatus "OK"
 
-            if ($AdfCtlOut.split() -contains "failed") {
-                continue
+    if ($CheckNumberResult.result) {
+        UT-TraceLogStart -Remote $false | out-null
+
+        $HeartbeatTimes = 1
+        Win-DebugTimestamp -output ("Will heartbeat qat device {0} times" -f $HeartbeatTimes)
+        for ($it = 0; $it -lt $HeartbeatTimes; $it++) {
+            Win-DebugTimestamp -output ("The time of heartbeat qat device > {0}" -f ($it + 1))
+            for ($i = 0; $i -lt $LocationInfo.PF.Number; $i++) {
+                $AdfCtlArgs = ("query {0}" -f $i)
+                $AdfCtlOut = &$AdfCtlExe $AdfCtlArgs.split()
+
+                if ($AdfCtlOut.split() -contains "failed") {
+                    continue
+                }
+
+                $AdfCtlArgs = ("heartbeat {0}" -f $i)
+
+                Win-DebugTimestamp -output ("Heartbeat qat device > {0}" -f $i)
+                $AdfCtlOut = &$AdfCtlExe $AdfCtlArgs.split()
+
+                if (($AdfCtlOut) -and ($AdfCtlOut.split() -contains "failed")) {
+                    Win-DebugTimestamp -output ("Heartbeat qat device is failed > {0} {1}" -f $AdfCtlExe, $AdfCtlArgs)
+                    if ($ReturnValue) {
+                        $ReturnValue = $false
+                    }
+                }
+
+                Start-Sleep -Seconds 45
             }
 
-            $AdfCtlArgs = ("heartbeat {0}" -f $i)
-
-            Win-DebugTimestamp -output ("Heartbeat qat device > {0}" -f $i)
-            $AdfCtlOut = &$AdfCtlExe $AdfCtlArgs.split()
-
-            if (($AdfCtlOut) -and ($AdfCtlOut.split() -contains "failed")) {
-                Win-DebugTimestamp -output ("Heartbeat qat device is failed > {0} {1}" -f $AdfCtlExe, $AdfCtlArgs)
-                return $false
-            }
-
-            Start-Sleep -Seconds 45
+            Start-Sleep -Seconds 60
         }
 
-        Start-Sleep -Seconds 60
+        if ($ReturnValue) {
+            $ReturnValue = UT-TraceLogCheck
+        }
+
+        if ($ReturnValue) {
+            $CheckNumberResult = WBase-CheckQatDevice `
+                -Remote $false `
+                -CheckStatus "OK"
+
+            $ReturnValue = $CheckNumberResult.result
+        }
+
+        Win-DebugTimestamp -output ("Heartbeat qat device is completed")
+    } else {
+        Win-DebugTimestamp -output ("The number of qat device is incorrect, skip heartbeat operation")
+        if ($ReturnValue) {
+            $ReturnValue = $false
+        }
     }
 
-    $returnFlag = UT-TraceLogCheck
-
-    Win-DebugTimestamp -output ("Heartbeat qat device is completed")
-
-    return $returnFlag
+    return $ReturnValue
 }
 
 function WBase-UpgradeQatDevice
@@ -2494,7 +2598,7 @@ function WBase-UpgradeQatDevice
         [array]$TestVmOpts
     )
 
-    $returnFlag = $true
+    $ReturnValue = $true
 
     if ($LocationInfo.HVMode) {
         # remove the QAT VF's
@@ -2511,8 +2615,9 @@ function WBase-UpgradeQatDevice
 
     $CheckDriverResult = WBase-CheckDriverInstalled -Remote $false
     if ($CheckDriverResult) {
-        $returnFlag = $false
-        return $returnFlag
+        if ($ReturnValue) {
+            $ReturnValue = $false
+        }
     }
 
     Win-DebugTimestamp -output ("Install Qat driver on local host: {0}" -f $LocationInfo.PF.DriverExe)
@@ -2523,8 +2628,9 @@ function WBase-UpgradeQatDevice
 
     $CheckDriverResult = WBase-CheckDriverInstalled -Remote $false
     if (-not $CheckDriverResult) {
-        $returnFlag = $false
-        return $returnFlag
+        if ($ReturnValue) {
+            $ReturnValue = $false
+        }
     }
 
     $DisableDeviceFlag = $false
@@ -2542,18 +2648,46 @@ function WBase-UpgradeQatDevice
         -Remote $false `
         -DisableFlag $DisableDeviceFlag | out-null
 
-    if ($LocationInfo.HVMode) {
-        # re-Add the QAT VF's
-        $TestVmOpts | ForEach-Object {
-            $vmName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
-
-            HV-AssignableDeviceAdd -VMName $vmName -QatVF $_.QatVF | out-null
-            $CheckStatus = HV-AssignableDeviceCheck -VMName $vmName -QatVF $_.QatVF
-            if (-not $CheckStatus) {$returnFlag = $false}
+    $CheckNumberResult = WBase-CheckQatDevice `
+        -Remote $false `
+        -CheckStatus "OK"
+    if (-not $CheckNumberResult.result) {
+        if ($ReturnValue) {
+            $ReturnValue = $false
         }
     }
 
-    return $returnFlag
+    if ($LocationInfo.HVMode) {
+        # re-Add the QAT VF's
+        $TestVmOpts | ForEach-Object {
+            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+            $PSSessionName = ("Session_{0}" -f $_.Name)
+            $Session = HV-PSSessionCreate `
+                -VMName $VMName `
+                -PSName $PSSessionName `
+                -IsWin $LocationInfo.VM.IsWin
+
+            HV-AssignableDeviceAdd -VMName $VMName -QatVF $_.QatVF | out-null
+            $CheckStatus = HV-AssignableDeviceCheck -VMName $VMName -QatVF $_.QatVF
+            if (-not $CheckStatus) {
+                if ($ReturnValue) {
+                    $ReturnValue = $false
+                }
+            }
+
+            $CheckNumberResult = WBase-CheckQatDevice `
+                -Remote $true `
+                -Session $Session `
+                -CheckStatus "OK"
+            if (-not $CheckNumberResult.result) {
+                if ($ReturnValue) {
+                    $ReturnValue = $false
+                }
+            }
+        }
+    }
+
+    return $ReturnValue
 }
 
 # About parcomp tool

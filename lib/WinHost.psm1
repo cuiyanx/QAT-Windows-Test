@@ -8,6 +8,14 @@ Import-Module $STVMainDll -Force -DisableNameChecking
 
 function WinHost-ENVInit
 {
+    # Check QAT devices
+    $CheckFlag = WBase-CheckQatDevice `
+        -Remote $false `
+        -CheckStatus "OK"
+    if (-not $CheckFlag.result) {
+        throw ("Host: The number of QAT devices is incorrect")
+    }
+
     # Check driver verifier
     $CheckFlag = UT-CheckDriverVerifier `
         -CheckFlag $LocationInfo.VerifierMode `

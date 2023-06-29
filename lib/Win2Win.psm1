@@ -403,29 +403,18 @@ function WTW-ENVInit
         }
 
         if ($InitVM) {
-            $deviceNumber = 0
-            $deviceList = Invoke-Command -Session $Session -ScriptBlock {
-                Param($LocationInfo)
-                Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
-            } -ArgumentList $LocationInfo
-            $deviceList | ForEach-Object {
-                if ($_.Status -eq "OK") {
-                    $deviceNumber += 1
-                }
-            }
-
-            if ($deviceNumber -eq $LocationInfo.VF.Number) {
+            $CheckFlag = WBase-CheckQatDevice `
+                -Remote $true `
+                -Session $Session `
+                -CheckStatus "OK"
+            if ($CheckFlag.result) {
                 Win-DebugTimestamp -output (
                     "{0}: The number of qat devices is correct > {1}" -f
                         $PSSessionName,
-                        $deviceNumber
+                        $CheckFlag.number
                 )
             } else {
-                throw (
-                    "{0}: The number of qat devices is incorrect > {1}" -f
-                        $PSSessionName,
-                        $deviceNumber
-                )
+                throw ("{0}: The number of QAT devices is incorrect" -f $PSSessionName)
             }
         }
     }
