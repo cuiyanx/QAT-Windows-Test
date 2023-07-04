@@ -582,9 +582,6 @@ function WTL-ENVInit
     $VMNameList | ForEach-Object {
         $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
         $PSSessionName = ("Session_{0}" -f $_)
-        $VMIP = HV-GetVMIPAddress -VMName $VMName
-        $VMIPLast = $_ -replace "vm", ""
-        $NewVMIP = "192.168.0.{0}" -f $VMIPLast
 
         HV-RestartVMHard `
             -VMName $VMName `
@@ -596,6 +593,10 @@ function WTL-ENVInit
         Start-Sleep -Seconds 120
 
         Win-DebugTimestamp -output ("{0}: Init STV test path..." -f $PSSessionName)
+
+        $VMIP = HV-GetVMIPAddress -VMName $VMName
+        $VMIPLast = $_ -replace "vm", ""
+        $NewVMIP = "192.168.0.{0}" -f $VMIPLast
 
         $VMTestBasePath = "\\{0}\\STV-tmp" -f $VMIP
         $HostPublicKey = "{0}\\{1}" -f $SSHKeys.Path, $SSHKeys.PublicKeyName
