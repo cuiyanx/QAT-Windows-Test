@@ -1,0 +1,9 @@
+network:
+  ethernets:
+    eth0:
+      addresses: [192.168.0.150/24]
+      routes:
+      - to: "default"
+        via: "192.168.0.100"
+  version: 2
+  renderer: NetworkManager

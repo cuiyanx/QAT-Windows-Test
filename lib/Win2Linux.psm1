@@ -468,7 +468,7 @@ function WTL-InstallAndUninstallQatDriver
     return $ReturnValue
 }
 
-function WBase-CheckDriverInstalled
+function WTL-CheckDriverInstalled
 {
     Param(
         [Parameter(Mandatory=$True)]
@@ -561,6 +561,7 @@ function WTL-ENVInit
         # Create VMs
         WTLCreateVMs -TestVmOpts $TestVmOpts -VMSwitch $VMSwitch | out-null
 
+        <#
         # Start VMs
         WTLRestartVMs `
             -VMNameList $VMNameList `
@@ -571,6 +572,7 @@ function WTL-ENVInit
             -SessionFlag $false | out-null
 
         Start-Sleep -Seconds 120
+        #>
     }
 
     # Create SSH keys
@@ -581,6 +583,17 @@ function WTL-ENVInit
         $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
         $PSSessionName = ("Session_{0}" -f $_)
         $VMIP = HV-GetVMIPAddress -VMName $VMName
+        $VMIPLast = $_ -replace "vm", ""
+        $NewVMIP = "192.168.0.{0}" -f $VMIPLast
+
+        HV-RestartVMHard `
+            -VMName $VMName `
+            -StopFlag $false `
+            -TurnOff $false `
+            -StartFlag $true `
+            -WaitFlag $false | out-null
+
+        Start-Sleep -Seconds 120
 
         Win-DebugTimestamp -output ("{0}: Init STV test path..." -f $PSSessionName)
 
@@ -589,6 +602,8 @@ function WTL-ENVInit
         $VMPublicKey = "{0}\\{1}" -f $VMTestBasePath, $SSHKeys.PublicKeyName
         $HostFreeLoginScript = "{0}\\{1}" -f $LinuxShell.HostPath, $LinuxShell.FreeLogin
         $VMFreeLoginScript = "{0}\\{1}" -f $VMTestBasePath, $LinuxShell.FreeLogin
+        $HostNetWorkConfig = "{0}\\{1}" -f $LinuxShell.HostPath, $STVNetNat.NetWorkConfig
+        $VMNetWorkConfig = "{0}\\{1}" -f $VMTestBasePath, $STVNetNat.NetWorkConfig
         $HostVFDriver = "{0}\\{1}" -f $LocationInfo.VF.DriverPath, $LocationInfo.VF.DriverName
         $VMVFDriver = "{0}\\{1}" -f $VMTestBasePath, $LocationInfo.VF.DriverName
         $VMVFDriverPath = "{0}\\{1}" -f $VMTestBasePath, $VMDriverInstallPath.InstallPath
@@ -613,6 +628,14 @@ function WTL-ENVInit
                 -ErrorAction Stop | out-null
         }
 
+        if (Test-Path -Path $VMNetWorkConfig) {
+            Remove-Item `
+                -Path $VMNetWorkConfig `
+                -Force `
+                -Confirm:$false `
+                -ErrorAction Stop | out-null
+        }
+
         if (Test-Path -Path $VMVFDriver) {
             Remove-Item `
                 -Path $VMVFDriver `
@@ -623,13 +646,27 @@ function WTL-ENVInit
 
         Copy-Item -Path $HostPublicKey -Destination $VMPublicKey | out-null
         Copy-Item -Path $HostFreeLoginScript -Destination $VMFreeLoginScript | out-null
+        Copy-Item -Path $HostNetWorkConfig -Destination $VMNetWorkConfig | out-null
         Copy-Item -Path $HostVFDriver -Destination $VMVFDriver | out-null
+
+        (Get-Content $VMNetWorkConfig) | Foreach-Object {
+            $_.replace($STVNetNat.VMIP, $NewVMIP)
+        } | Set-Content $VMNetWorkConfig
+
+        HV-RestartVMHard `
+            -VMName $VMName `
+            -StopFlag $true `
+            -TurnOff $false `
+            -StartFlag $false `
+            -WaitFlag $false | out-null
     }
 
-    # Start VMs
+    Start-Sleep -Seconds 30
+
+    # ReStart VMs
     WTLRestartVMs `
         -VMNameList $VMNameList `
-        -StopFlag $true `
+        -StopFlag $false `
         -TurnOff $false `
         -StartFlag $true `
         -WaitFlag $true `
@@ -650,7 +687,7 @@ function WTL-ENVInit
         }
     }
 
-    $CheckResult = WBase-CheckDriverInstalled -VMNameList $VMNameList
+    $CheckResult = WTL-CheckDriverInstalled -VMNameList $VMNameList
     if (-not $CheckResult) {
         throw ("The QAT Linux driver has not installed")
     }

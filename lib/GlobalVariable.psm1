@@ -6,8 +6,6 @@ if (!$QATTESTPATH) {
 
 Set-Variable -Name "STVWinPath" -Value "C:\\STV-tmp" -Scope global
 Set-Variable -Name "STVLinuxPath" -Value "/home/administrator/STV-tmp" -Scope global
-Set-Variable -Name "VMSwitch_Name_External" -Value "STV_VMSwitch_External" -Scope global
-Set-Variable -Name "VMSwitch_Name_Internal" -Value "STV_VMSwitch_Internal" -Scope global
 
 $global:sevenZipExe = "{0}\\utils\\7z.exe" -f $QATTESTPATH
 $global:sevenZipDll = "{0}\\lib\\SevenZip.dll" -f $QATTESTPATH
@@ -280,6 +278,16 @@ $global:TestResultToBerta = [hashtable] @{
 }
 
 # About athers
+$global:STVNetNat = [hashtable] @{
+    Name = "STV_NetNat"
+    SwitchExternal = "STV_VMSwitch_External"
+    SwitchInternal = "STV_VMSwitch_Internal"
+    HostIP = "192.168.0.200"
+    VMIP = "192.168.0.150"
+    GateWay = "192.168.0.100"
+    NetWorkConfig = "01-network-manager-all.yaml"
+}
+
 $global:SiteKeep = [hashtable] @{
     DumpFile = "C:\\Windows\\MEMORY.DMP"
 }

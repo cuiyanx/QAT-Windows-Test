@@ -415,45 +415,88 @@ function HV-RemoveVM
 # About VM switch
 function HV-VMSwitchCreate
 {
-    $ReturnValue = $VMSwitch_Name_Internal
+    Param(
+        [string]$VMSwitchType = "Internal"
+    )
 
-    <#
-    # Remove all netnats
-    $GetNetNatError = $null
-    $GetNetNats = Get-NetNat `
-        -ErrorAction SilentlyContinue `
-        -ErrorVariable GetNetNatError
+    $ReturnValue = $STVNetNat.SwitchInternal
 
-    if ([String]::IsNullOrEmpty($GetNetNatError)) {
-        foreach ($GetNetNat in $GetNetNats) {
-            Remove-NetNat `
-                -Name $GetNetNat.Name `
-                -Confirm:$false `
-                -ErrorAction Stop | Out-Null
-        }
-    }
-    #>
-
-    $VMSwitchType = "Internal"
-    $GetVMSwitchError = $null
-    $VMSwitch = Get-VMSwitch `
-        -Name $VMSwitch_Name_Internal `
-        -SwitchType $VMSwitchType `
-        -ErrorAction SilentlyContinue `
-        -ErrorVariable GetVMSwitchError
-    if ([String]::IsNullOrEmpty($GetVMSwitchError)) {
-        Win-DebugTimestamp -output ("Host: Get VM switch(Internal) named {0}" -f $VMSwitch_Name_Internal)
-        $ReturnValue = $VMSwitch_Name_Internal
-    } else {
-        $VMSwitchType = "External"
+    if ($VMSwitchType -eq "Internal") {
         $GetVMSwitchError = $null
         $VMSwitch = Get-VMSwitch `
-            -Name $VMSwitch_Name_External `
+            -Name $STVNetNat.SwitchInternal `
             -SwitchType $VMSwitchType `
             -ErrorAction SilentlyContinue `
             -ErrorVariable GetVMSwitchError
+
         if ([String]::IsNullOrEmpty($GetVMSwitchError)) {
-            Win-DebugTimestamp -output ("Host: Get VM switch(External) named {0}" -f $VMSwitch_Name_External)
+            $InterfaceIndex = Get-NetAdapter | ForEach-Object {
+                if ($_.Name -match $VMSwitchType) {return $_.ifIndex}
+            }
+
+            $NetIPAddress = Get-NetIPAddress `
+                -InterfaceIndex $InterfaceIndex `
+                -AddressFamily IPv4
+
+            $NetIPAddress = $NetIPAddress.IPAddress
+            if ($NetIPAddress -ne $STVNetNat.HostIP) {
+                Remove-NetIPAddress `
+                    -InterfaceIndex $InterfaceIndex `
+                    -Confirm:$false `
+                    -ErrorAction Stop | Out-Null
+
+                Remove-NetRoute `
+                    -InterfaceIndex $InterfaceIndex `
+                    -Confirm:$false `
+                    -ErrorAction Stop | Out-Null
+
+                New-NetIPAddress `
+                    -InterfaceIndex $InterfaceIndex `
+                    -IPAddress $STVNetNat.HostIP `
+                    -AddressFamily IPv4 `
+                    -PrefixLength 24 `
+                    -DefaultGateway $STVNetNat.GateWay `
+                    -Confirm:$false `
+                    -ErrorAction Stop | Out-Null
+            }
+
+            Win-DebugTimestamp -output ("Host: Get VM switch(Internal) named {0}" -f $STVNetNat.SwitchInternal)
+            $ReturnValue = $STVNetNat.SwitchInternal
+        } else {
+            New-VMSwitch `
+                -Name $STVNetNat.SwitchInternal `
+                -SwitchType $VMSwitchType `
+                -Confirm:$false `
+                -ErrorAction Stop | Out-Null
+
+            $InterfaceIndex = Get-NetAdapter | ForEach-Object {
+                if ($_.Name -match $VMSwitchType) {return $_.ifIndex}
+            }
+
+            New-NetIPAddress `
+                -InterfaceIndex $InterfaceIndex `
+                -IPAddress $STVNetNat.HostIP `
+                -AddressFamily IPv4 `
+                -PrefixLength 24 `
+                -DefaultGateway $STVNetNat.GateWay `
+                -Confirm:$false `
+                -ErrorAction Stop | Out-Null
+
+            Win-DebugTimestamp -output ("Host: Create VM switch(Internal) named {0}" -f $STVNetNat.SwitchInternal)
+            $ReturnValue = $STVNetNat.SwitchInternal
+        }
+    }
+
+    if ($VMSwitchType -eq "External") {
+        $GetVMSwitchError = $null
+        $VMSwitch = Get-VMSwitch `
+            -Name $STVNetNat.SwitchExternal `
+            -SwitchType $VMSwitchType `
+            -ErrorAction SilentlyContinue `
+            -ErrorVariable GetVMSwitchError
+
+        if ([String]::IsNullOrEmpty($GetVMSwitchError)) {
+            Win-DebugTimestamp -output ("Host: Get VM switch(External) named {0}" -f $STVNetNat.SwitchExternal)
         } else {
             $HostNetwork =  Get-NetIPAddress | Where-Object {
                 $_.AddressFamily -eq "IPv4" -and $_.IPAddress -ne "127.0.0.1" -and $_.InterfaceAlias -notmatch "vEthernet"
@@ -462,29 +505,29 @@ function HV-VMSwitchCreate
             if ($HostNetwork.length -ge 1) {
                 $VMSwitchList = Get-VMSwitch -SwitchType $VMSwitchType
                 if ($VMSwitchList.length -ge 1) {
-                    Win-DebugTimestamp -output ("Host: Rename VM switch(External) to {0}" -f $VMSwitch_Name_External)
+                    Win-DebugTimestamp -output ("Host: Rename VM switch(External) to {0}" -f $STVNetNat.SwitchExternal)
                     try {
                         Rename-VMSwitch `
                             -VMSwitch $VMSwitchList[0] `
-                            -NewName $VMSwitch_Name_External `
+                            -NewName $STVNetNat.SwitchExternal `
                             -Confirm:$false `
                             -ErrorAction Stop | Out-Null
                     } catch {
-                        throw ("Error: Rename VM switch(External) > {0}" -f $VMSwitch_Name_External)
+                        throw ("Error: Rename VM switch(External) > {0}" -f $STVNetNat.SwitchExternal)
                     }
                 } else {
-                    Win-DebugTimestamp -output ("Host: Create VM switch(External) named {0}" -f $VMSwitch_Name_External)
+                    Win-DebugTimestamp -output ("Host: Create VM switch(External) named {0}" -f $STVNetNat.SwitchExternal)
                     $HostNetwork = $HostNetwork[0]
                     $HostAdapter = Get-NetAdapter -Name $HostNetwork.InterfaceAlias
 
                     try {
                         New-VMSwitch `
-                            -Name $VMSwitch_Name_External `
+                            -Name $STVNetNat.SwitchExternal `
                             -NetAdapterInterfaceDescription $HostAdapter.InterfaceDescription `
                             -Confirm:$false `
                             -ErrorAction Stop | Out-Null
                     } catch {
-                        throw ("Error: Create VM switch(External) > {0}" -f $VMSwitch_Name_External)
+                        throw ("Error: Create VM switch(External) > {0}" -f $STVNetNat.SwitchExternal)
                     }
                 }
             } else {
@@ -492,7 +535,7 @@ function HV-VMSwitchCreate
             }
         }
 
-        $ReturnValue = $VMSwitch_Name_External
+        $ReturnValue = $STVNetNat.SwitchExternal
     }
 
     return $ReturnValue
