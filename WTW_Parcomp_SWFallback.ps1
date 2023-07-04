@@ -187,6 +187,9 @@ try {
 
             Foreach ($TestCase in $TestCaseList) {
                 Foreach ($TestType in $AllTestType.Operation) {
+                    # WorkAround: https://jira.devtools.intel.com/browse/QAT20-29817
+                    if (($TestType -eq "heartbeat") -and ($VMVFOSConfig -match "2vm_64vf_")) {continue}
+
                     # deCompress: qatgzip and qatgzipext not support -k -t -Q
                     if (($TestCase.Provider -eq "qatgzip") -or
                         ($TestCase.Provider -eq "qatgzipext")) {
