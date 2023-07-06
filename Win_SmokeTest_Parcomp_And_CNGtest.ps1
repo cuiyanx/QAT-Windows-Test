@@ -228,10 +228,10 @@ try {
                     $HVModeToolCNGTest = $false
 
                     if ($BertaConfig["driver_verifier"]) {
-                        [System.Array]$SmokeTestCNGTestTypes = ("Base")
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Heartbeat")
                         [System.Array]$SmokeTestParcompTypes = ("Base", "Heartbeat")
                     } else {
-                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Performance")
+                        [System.Array]$SmokeTestCNGTestTypes = ("Base", "Performance", "Heartbeat")
                         [System.Array]$SmokeTestParcompTypes = ("Base", "Performance", "Heartbeat")
                     }
                 }
