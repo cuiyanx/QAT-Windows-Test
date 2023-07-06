@@ -2674,6 +2674,17 @@ function WBase-UpgradeQatDevice
                     $ReturnValue = $false
                 }
             }
+        }
+
+        Start-Sleep -Seconds 90
+
+        $TestVmOpts | ForEach-Object {
+            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+            $PSSessionName = ("Session_{0}" -f $_.Name)
+            $Session = HV-PSSessionCreate `
+                -VMName $VMName `
+                -PSName $PSSessionName `
+                -IsWin $LocationInfo.VM.IsWin
 
             $CheckNumberResult = WBase-CheckQatDevice `
                 -Remote $true `
