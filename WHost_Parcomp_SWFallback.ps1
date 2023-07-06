@@ -110,7 +110,10 @@ try {
     # Special: For QAT20
     if ($LocationInfo.QatType -eq "QAT20") {
         if ($LocationInfo.UQMode) {
-            [System.Array]$AllTestType.Operation = ("heartbeat")
+            if ([String]::IsNullOrEmpty($runTestCase)) {
+                [System.Array]$ParcompProvider = ("qat", "qatgzip", "qatgzipext", "qatlz4")
+                [System.Array]$AllTestType.Operation = ("heartbeat")
+            }
         }
     }
 

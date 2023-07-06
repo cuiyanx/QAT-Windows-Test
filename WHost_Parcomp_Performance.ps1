@@ -110,6 +110,13 @@ try {
     }
 
     # Special: For QAT20
+    if ($LocationInfo.QatType -eq "QAT20") {
+        if ($LocationInfo.UQMode) {
+            if ([String]::IsNullOrEmpty($runTestCase)) {
+                [System.Array]$ParcompProvider = ("qat", "qatlz4")
+            }
+        }
+    }
 
     # Parcomp: Generate test case list based on config
     $TestCaseList = WBase-GenerateParcompTestCase `
