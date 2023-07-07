@@ -70,6 +70,7 @@ try {
 
     # Special: For All
     if ([String]::IsNullOrEmpty($runTestCase)) {
+        [System.Array]$ParcompProvider = ("qat", "qatgzip", "qatgzipext")
         [System.Array]$ParcompCompressType = ("Compress", "deCompress")
         [System.Array]$ParcompBlock = (4096)
         [System.Array]$ParcompIteration = (200)

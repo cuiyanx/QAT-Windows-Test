@@ -167,7 +167,9 @@ $global:ParcompProvider = [System.Array] @(
     "qat",
     "qatzlib",
     "qatgzip",
-    "qatgzipext"
+    "qatgzipext",
+    "igzip",
+    "qatlz4"
 )
 
 $global:ParcompChunk = [System.Array] @(1, 2, 8, 16, 64, 128, 256, 512)

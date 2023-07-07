@@ -3039,6 +3039,8 @@ function WBase-Parcomp
         $ParcompArges += " -p qatgzipext"
     } elseif ($ParcompProvider -eq "igzip") {
         $ParcompArges += " -p igzip"
+    } elseif ($ParcompProvider -eq "qatlz4") {
+        $ParcompArges += " -p qatlz4"
     } else {
         Win-DebugTimestamp -output (
             "{0}: Not support compress provider > {1}" -f $LogKeyWord, $ParcompProvider
