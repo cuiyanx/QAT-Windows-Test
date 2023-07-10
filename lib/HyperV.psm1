@@ -602,9 +602,9 @@ function HV-AssignableDeviceCheck
     $ReturnValue = ($TargetDevNember -eq $CheckDevNember) ? $true : $false
 
     if ($ReturnValue) {
-        Win-DebugTimestamp -output ("Double check device number is successful")
+        Win-DebugTimestamp -output ("Double check assignable VF number is correct")
     } else {
-        Win-DebugTimestamp -output ("Double check device number is failed")
+        Win-DebugTimestamp -output ("Double check assignable VF number is incorrect")
     }
 
     return $ReturnValue

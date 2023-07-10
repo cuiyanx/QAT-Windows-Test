@@ -2283,13 +2283,13 @@ function WBase-CheckQatDevice
         $CheckNumber = $LocationInfo.VF.Number
         $ReturnValue.list = Invoke-Command -Session $Session -ScriptBlock {
             Param($LocationInfo)
-            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName -PresentOnly
         } -ArgumentList $LocationInfo
     } else {
         $CheckNumber = $LocationInfo.PF.Number
         $ReturnValue.list = Invoke-Command -ScriptBlock {
             Param($LocationInfo)
-            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName
+            Get-PnpDevice -friendlyname $LocationInfo.FriendlyName -PresentOnly
         } -ArgumentList $LocationInfo
     }
 
@@ -2309,6 +2309,12 @@ function WBase-CheckQatDevice
         if ($ReturnValue.number -ne $CheckNumber) {
             $ReturnValue.result = $false
         }
+    }
+
+    if ($ReturnValue.result) {
+        Win-DebugTimestamp -output ("Double check VF device number is correct")
+    } else {
+        Win-DebugTimestamp -output ("Double check VF device number is incorrect")
     }
 
     return $ReturnValue
@@ -2355,7 +2361,7 @@ function WBase-EnableAndDisableQatDevice
                 $CheckResult.number
         )
 
-        if ($CheckResult) {
+        if ($CheckResult.result) {
             $CheckResult.list | ForEach-Object {
                 Win-DebugTimestamp -output (
                     "{0}: Disable qat device > {1}" -f $LogKeyWord, $_.InstanceId
@@ -2447,7 +2453,7 @@ function WBase-EnableAndDisableQatDevice
                 $CheckResult.number
         )
 
-        if ($CheckResult) {
+        if ($CheckResult.result) {
             $CheckResult.list | ForEach-Object {
                 Win-DebugTimestamp -output (
                     "{0}: Enable qat device > {1}" -f $LogKeyWord, $_.InstanceId
