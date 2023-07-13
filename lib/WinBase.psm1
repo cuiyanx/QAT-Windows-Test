@@ -204,6 +204,9 @@ function WBase-HostDeviceInit
     $LocationInfo.PF.Number = 0
     $LocationInfo.QatType = $null
     $LocationInfo.IcpQatName = $null
+    $LocationInfo.Socket = 0
+    $LocationInfo.Socket2PF = 0
+    $LocationInfo.PF2VF = 0
 
     $SocketArray = Get-CimInstance -ClassName win32_processor
     $SocketArrayType = $SocketArray.gettype()
@@ -215,6 +218,8 @@ function WBase-HostDeviceInit
         Win-DebugTimestamp -output ("Host: Can not get the socket number of CPU")
         return $false
     }
+
+    $LocationInfo.Socket = $SocketNumber
     Win-DebugTimestamp -output ("Host: Get the socket number of CPU > {0}" -f $SocketNumber)
 
     ForEach ($FriendlyName in $FriendlyNames) {
@@ -244,19 +249,27 @@ function WBase-HostDeviceInit
     if ($LocationInfo.FriendlyName -eq "Intel(R) C62x Accelerator*") {
         $LocationInfo.QatType = "QAT17"
         $LocationInfo.IcpQatName = "icp_qat"
-        $PFNumber = $SocketNumber * 3
+        $LocationInfo.Socket2PF = 3
+        $LocationInfo.PF2VF = 16
+        $PFNumber = $SocketNumber * $LocationInfo.Socket2PF
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) C4xxx Accelerator*") {
         $LocationInfo.QatType = "QAT18"
         $LocationInfo.IcpQatName = "icp_qat"
-        $PFNumber = $SocketNumber
+        $LocationInfo.Socket2PF = 1
+        $LocationInfo.PF2VF = 64
+        $PFNumber = $SocketNumber * $LocationInfo.Socket2PF
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) 4xxx Accelerator*") {
         $LocationInfo.QatType = "QAT20"
         $LocationInfo.IcpQatName = "icp_qat4"
-        $PFNumber = $SocketNumber * 4
+        $LocationInfo.Socket2PF = 4
+        $LocationInfo.PF2VF = 16
+        $PFNumber = $SocketNumber * $LocationInfo.Socket2PF
     } elseif ($LocationInfo.FriendlyName -eq "Intel(R) 401xx Accelerator*") {
         $LocationInfo.QatType = "QAT20"
         $LocationInfo.IcpQatName = "icp_qat4"
-        $PFNumber = $SocketNumber * 2
+        $LocationInfo.Socket2PF = 2
+        $LocationInfo.PF2VF = 16
+        $PFNumber = $SocketNumber * $LocationInfo.Socket2PF
     } else {
         Win-DebugTimestamp -output ("Host: Can not get the friendly name")
         return $false
@@ -611,6 +624,9 @@ function WBase-LocationInfoInit
     Win-DebugTimestamp -output ("        VerifierMode : {0}" -f $LocationInfo.VerifierMode)
     Win-DebugTimestamp -output ("             QatType : {0}" -f $LocationInfo.QatType)
     Win-DebugTimestamp -output ("        FriendlyName : {0}" -f $LocationInfo.FriendlyName)
+    Win-DebugTimestamp -output ("              Socket : {0}" -f $LocationInfo.Socket)
+    Win-DebugTimestamp -output ("           Socket2PF : {0}" -f $LocationInfo.Socket2PF)
+    Win-DebugTimestamp -output ("               PF2VF : {0}" -f $LocationInfo.PF2VF)
     Win-DebugTimestamp -output ("            PFNumber : {0}" -f $LocationInfo.PF.Number)
     Win-DebugTimestamp -output ("                 PFs : {0}" -f $LocationInfo.PF.PCI)
     Win-DebugTimestamp -output ("     BertaResultPath : {0}" -f $LocationInfo.BertaResultPath)
@@ -2600,16 +2616,12 @@ function WBase-HeartbeatQatDevice
 
 function WBase-UpgradeQatDevice
 {
-    Param(
-        [array]$TestVmOpts
-    )
-
     $ReturnValue = $true
 
     if ($LocationInfo.HVMode) {
         # remove the QAT VF's
-        $TestVmOpts | ForEach-Object {
-            $vmName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+        $LocationInfo.VM.NameArray | ForEach-Object {
+            $vmName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
             HV-AssignableDeviceRemove -VMName $VMName | out-null
         }
     }
@@ -2665,8 +2677,8 @@ function WBase-UpgradeQatDevice
 
     if ($LocationInfo.HVMode) {
         # re-Add the QAT VF's
-        $TestVmOpts | ForEach-Object {
-            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+        $LocationInfo.VM.NameArray | ForEach-Object {
+            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
             $PSSessionName = ("Session_{0}" -f $_.Name)
             $Session = HV-PSSessionCreate `
                 -VMName $VMName `
@@ -2684,8 +2696,8 @@ function WBase-UpgradeQatDevice
 
         Start-Sleep -Seconds 90
 
-        $TestVmOpts | ForEach-Object {
-            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+        $LocationInfo.VM.NameArray | ForEach-Object {
+            $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
             $PSSessionName = ("Session_{0}" -f $_.Name)
             $Session = HV-PSSessionCreate `
                 -VMName $VMName `

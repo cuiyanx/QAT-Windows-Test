@@ -72,14 +72,11 @@ function WTWCreateVMs
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [Array]$TestVmOpts,
-
-        [Parameter(Mandatory=$True)]
-        [string]$VMSwitch
+        [array]$VMNameList
     )
 
-    $TestVmOpts | ForEach-Object {
-        HV-CreateVM -VMConfig $_ -VMSwitch $VMSwitch | out-null
+    $VMNameList | ForEach-Object {
+        HV-CreateVM -VMNameSuffix $_ | out-null
     }
 }
 
@@ -94,57 +91,25 @@ function WTWRemoveVMs
 }
 
 # About test ENV init
-function WTW-VMVFInfoInit
-{
-    Param(
-        [Parameter(Mandatory=$True)]
-        [string]$VMVFOSConfig
-    )
-
-    $LocationInfo.VM.Number = $null
-    $LocationInfo.VF.Number = $null
-    $LocationInfo.VM.OS = $null
-
-    if ([String]::IsNullOrEmpty($VMVFOSConfig)) {
-        Win-DebugTimestamp -output ("Host: The config of 'VMVFOS' is not null for HV mode")
-    } else {
-        $VMVFOSConfig = Split-Path -Path $VMVFOSConfig -Leaf
-        $HostVMs = $VMVFOSConfig.split("_")[1]
-        $LocationInfo.VM.Number = [int]($HostVMs.Substring(0, $HostVMs.Length - 2))
-        $HostVFs = $VMVFOSConfig.split("_")[2]
-        $LocationInfo.VF.Number = [int]($HostVFs.Substring(0, $HostVFs.Length - 2))
-        $LocationInfo.VM.OS = ($VMVFOSConfig.split("_")[3]).split(".")[0]
-
-        Win-DebugTimestamp -output ("LocationInfo: VMNumber > {0}" -f $LocationInfo.VM.Number)
-        Win-DebugTimestamp -output ("LocationInfo: VFNumber > {0}" -f $LocationInfo.VF.Number)
-        Win-DebugTimestamp -output ("LocationInfo: VMOS > {0}" -f $LocationInfo.VM.OS)
-    }
-}
-
 function WTW-ENVInit
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [string]$configFile,
+        [string]$VMVFOSConfig,
 
-        [bool]$InitVM
+        [bool]$InitVM = $true
     )
 
-    [System.Array] $TestVmOpts = (Get-Content $configFile | ConvertFrom-Json).TestVms
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    HV-VMVFConfigInit -VMVFOSConfig $VMVFOSConfig | out-null
+
+    $VMNameList = $LocationInfo.VM.NameArray
 
     if ($InitVM) {
         # Remove VMs
         WTWRemoveVMs | out-null
 
-        # Create new VM switch or rename existing VM switch.
-        $VMSwitch = HV-VMSwitchCreate
-
         # Create VMs
-        WTWCreateVMs -TestVmOpts $TestVmOpts -VMSwitch $VMSwitch | out-null
+        WTWCreateVMs -VMNameList $VMNameList | out-null
 
         # Start VMs
         WTWRestartVMs `
@@ -762,9 +727,6 @@ function WTWEnableAndDisableQatDevice
 function WTW-InstallerCheckBase
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [string]$BertaResultPath,
 
         [bool]$parcompFlag = $true,
@@ -812,10 +774,7 @@ function WTW-InstallerCheckBase
         }
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $InstallTestResultsList = @{
     #     vm = $null
@@ -908,12 +867,12 @@ function WTW-InstallerCheckBase
     # Run parcomp test after QAT Windows driver installed
     if ($parcompFlag) {
         Win-DebugTimestamp -output ("After QAT driver installed, double check > run parcomp test")
-        $parcompTestResult = WTW-ParcompBase -TestVmOpts $TestVmOpts `
-                                               -deCompressFlag $false `
-                                               -CompressProvider "qat" `
-                                               -deCompressProvider "qat" `
-                                               -QatCompressionType "dynamic" `
-                                               -BertaResultPath $BertaResultPath
+        $parcompTestResult = WTW-ParcompBase `
+            -deCompressFlag $false `
+            -CompressProvider "qat" `
+            -deCompressProvider "qat" `
+            -QatCompressionType "dynamic" `
+            -BertaResultPath $BertaResultPath
 
         Win-DebugTimestamp -output ("Running parcomp test is completed > {0}" -f $parcompTestResult.result)
 
@@ -924,9 +883,7 @@ function WTW-InstallerCheckBase
     # Run CNGTest after QAT Windows driver installed
     if ($cngtestFlag) {
         Win-DebugTimestamp -output ("After QAT driver installed, double check > run cngtest")
-        $CNGTestTestResult = WTW-CNGTestBase -TestVmOpts $TestVmOpts `
-                                               -algo "rsa" `
-                                               -BertaResultPath $BertaResultPath
+        $CNGTestTestResult = WTW-CNGTestBase -algo "rsa" -BertaResultPath $BertaResultPath
 
         Win-DebugTimestamp -output ("Running cngtest is completed > {0}" -f $CNGTestTestResult.result)
 
@@ -956,8 +913,8 @@ function WTW-InstallerCheckBase
     }
 
     # Wait QAT driver to complete on VMs
-    $TestVmOpts | ForEach-Object {
-        $vmName = ("{0}_{1}" -f $env:COMPUTERNAME, $_.Name)
+    $VMNameList | ForEach-Object {
+        $vmName = ("{0}_{1}" -f $env:COMPUTERNAME, $_)
         $PSSessionName = ("Session_{0}" -f $_.Name)
         $Session = HV-PSSessionCreate `
             -VMName $vmName `
@@ -1070,9 +1027,6 @@ function WTW-InstallerCheckBase
 function WTW-InstallerCheckDisable
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [string]$BertaResultPath,
 
         [bool]$parcompFlag = $true,
@@ -1096,20 +1050,17 @@ function WTW-InstallerCheckDisable
         }
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # Run simple parcomp test to check qat driver work well
     if ($parcompFlag) {
         Win-DebugTimestamp -output ("After QAT driver installed, double check > run parcomp test")
-        $parcompTestResult = WTW-ParcompBase -TestVmOpts $TestVmOpts `
-                                               -deCompressFlag $false `
-                                               -CompressProvider "qat" `
-                                               -deCompressProvider "qat" `
-                                               -QatCompressionType "dynamic" `
-                                               -BertaResultPath $BertaResultPath
+        $parcompTestResult = WTW-ParcompBase `
+            -deCompressFlag $false `
+            -CompressProvider "qat" `
+            -deCompressProvider "qat" `
+            -QatCompressionType "dynamic" `
+            -BertaResultPath $BertaResultPath
 
         Win-DebugTimestamp -output ("Running parcomp test is completed > {0}" -f $parcompTestResult.result)
 
@@ -1120,7 +1071,7 @@ function WTW-InstallerCheckDisable
     # Run simple cngtest to check qat driver work well
     if ($cngtestFlag) {
         Win-DebugTimestamp -output ("After QAT driver installed, double check > run cngtest")
-        $CNGTestTestResult = WTW-CNGTestBase -TestVmOpts $TestVmOpts -algo "rsa"
+        $CNGTestTestResult = WTW-CNGTestBase -algo "rsa"
 
         Win-DebugTimestamp -output ("Running cngtest is completed > {0}" -f $CNGTestTestResult.result)
 
@@ -1141,12 +1092,12 @@ function WTW-InstallerCheckDisable
     # Run simple parcomp test again to check qat driver work well
     if ($parcompFlag) {
         Win-DebugTimestamp -output ("After QAT driver disable and enable, double check > run parcomp test")
-        $parcompTestResult = WTW-ParcompBase -TestVmOpts $TestVmOpts `
-                                               -deCompressFlag $false `
-                                               -CompressProvider "qat" `
-                                               -deCompressProvider "qat" `
-                                               -QatCompressionType "dynamic" `
-                                               -BertaResultPath $BertaResultPath
+        $parcompTestResult = WTW-ParcompBase `
+            -deCompressFlag $false `
+            -CompressProvider "qat" `
+            -deCompressProvider "qat" `
+            -QatCompressionType "dynamic" `
+            -BertaResultPath $BertaResultPath
 
         Win-DebugTimestamp -output ("Running parcomp test is completed > {0}" -f $parcompTestResult.result)
 
@@ -1159,7 +1110,7 @@ function WTW-InstallerCheckDisable
     # Run simple cngtest again to check qat driver work well
     if ($cngtestFlag) {
         Win-DebugTimestamp -output ("After QAT driver disable and enable, double check > run cngtest")
-        $CNGTestTestResult = WTW-CNGTestBase -TestVmOpts $TestVmOpts -algo "rsa"
+        $CNGTestTestResult = WTW-CNGTestBase -algo "rsa"
 
         Win-DebugTimestamp -output ("Running cngtest is completed > {0}" -f $CNGTestTestResult.result)
 
@@ -1177,9 +1128,6 @@ function WTW-InstallerCheckDisable
 function WTW-ParcompBase
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [bool]$deCompressFlag = $false,
 
         [string]$CompressProvider = "qat",
@@ -1210,10 +1158,7 @@ function WTW-ParcompBase
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $ParameterTestResultsList = @{
     #     vm = $null
@@ -1448,9 +1393,6 @@ function WTW-ParcompBase
 function WTW-ParcompPerformance
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [bool]$deCompressFlag = $false,
 
         [string]$CompressProvider = "qat",
@@ -1491,10 +1433,7 @@ function WTW-ParcompPerformance
         TestFileType = $null
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $PerformanceTestResultsList = @{
     #     vm = $null
@@ -1785,9 +1724,6 @@ function WTW-ParcompPerformance
 function WTW-ParcompSWfallback
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [string]$CompressType = "Compress",
 
         [string]$CompressProvider = "qat",
@@ -1824,10 +1760,7 @@ function WTW-ParcompSWfallback
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $FallbackTestResultsList = @{
     #     vm = $null
@@ -1953,7 +1886,7 @@ function WTW-ParcompSWfallback
         }
     } elseif ($TestType -eq "upgrade") {
         Win-DebugTimestamp -output ("Run 'upgrade' operation on local host")
-        $upgradeStatus = WBase-UpgradeQatDevice -TestVmOpts $TestVmOpts
+        $upgradeStatus = WBase-UpgradeQatDevice
 
         Win-DebugTimestamp -output ("The upgrade operation > {0}" -f $upgradeStatus)
         if (!$upgradeStatus) {
@@ -2168,12 +2101,12 @@ function WTW-ParcompSWfallback
     # Run parcomp test after fallback test
     if ($ReturnValue.result) {
         Win-DebugTimestamp -output ("Double check: Run parcomp test after fallback test")
-        $parcompTestResult = WTW-ParcompBase -TestVmOpts $TestVmOpts `
-                                               -deCompressFlag $false `
-                                               -CompressProvider $CompressProvider `
-                                               -deCompressProvider $CompressProvider `
-                                               -QatCompressionType $QatCompressionType `
-                                               -BertaResultPath $BertaResultPath
+        $parcompTestResult = WTW-ParcompBase `
+            -deCompressFlag $false `
+            -CompressProvider $CompressProvider `
+            -deCompressProvider $CompressProvider `
+            -QatCompressionType $QatCompressionType `
+            -BertaResultPath $BertaResultPath
 
         if (!$parcompTestResult.result) {
             $ReturnValue.result = $parcompTestResult.result
@@ -2229,9 +2162,6 @@ function WTW-CNGTestBase
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
-        [Parameter(Mandatory=$True)]
         [string]$algo,
 
         [string]$operation = "encrypt",
@@ -2258,10 +2188,7 @@ function WTW-CNGTestBase
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $CNGTestResultsList = @{
     #     vm = $null
@@ -2424,9 +2351,6 @@ function WTW-CNGTestPerformance
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
-        [Parameter(Mandatory=$True)]
         [string]$algo,
 
         [string]$operation = "encrypt",
@@ -2456,10 +2380,7 @@ function WTW-CNGTestPerformance
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $CNGTestResultsList = @{
     #     vm = $null
@@ -2634,9 +2555,6 @@ function WTW-CNGTestSWfallback
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
-        [Parameter(Mandatory=$True)]
         [string]$algo,
 
         [string]$operation = "encrypt",
@@ -2665,10 +2583,7 @@ function WTW-CNGTestSWfallback
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $CNGTestResultsList = @{
     #     vm = $null
@@ -2754,7 +2669,7 @@ function WTW-CNGTestSWfallback
         }
     } elseif ($TestType -eq "upgrade") {
         Win-DebugTimestamp -output ("Run 'upgrade' operation on local host")
-        $upgradeStatus = WBase-UpgradeQatDevice -TestVmOpts $TestVmOpts
+        $upgradeStatus = WBase-UpgradeQatDevice
 
         Win-DebugTimestamp -output ("The upgrade operation > {0}" -f $upgradeStatus)
         if (!$upgradeStatus) {
@@ -2823,7 +2738,7 @@ function WTW-CNGTestSWfallback
     if ($ReturnValue.result) {
         Win-DebugTimestamp -output ("Double check: Run CNGTest after fallback test")
 
-        $CNGTestTestResult = WTW-CNGTestBase -TestVmOpts $TestVmOpts -algo $algo
+        $CNGTestTestResult = WTW-CNGTestBase -algo $algo
 
         Win-DebugTimestamp -output ("Running cngtest is completed > {0}" -f $CNGTestTestResult.result)
 
@@ -2899,9 +2814,6 @@ function WTW-CNGTestSWfallback
 function WTW-Stress
 {
     Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts,
-
         [bool]$RunParcomp = $true,
 
         [bool]$RunCNGtest = $true,
@@ -2914,10 +2826,7 @@ function WTW-Stress
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # $StressTestResultsList = @{
     #     vm = $null

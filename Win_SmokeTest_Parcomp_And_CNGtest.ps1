@@ -167,13 +167,7 @@ try {
 
     # Init VM VF OS for HyperV mode
     if ([String]::IsNullOrEmpty($VMVFOSConfigs)) {
-        if ($LocationInfo.QatType -eq "QAT20") {
-            [System.Array]$VMVFOSConfigs = ("1vm_8vf_windows2022")
-        } elseif ($LocationInfo.QatType -eq "QAT17") {
-            [System.Array]$VMVFOSConfigs = ("1vm_3vf_windows2022")
-        } elseif ($LocationInfo.QatType -eq "QAT18") {
-            [System.Array]$VMVFOSConfigs = ("1vm_3vf_windows2022")
-        }
+        [System.Array]$VMVFOSConfigs = HV-GenerateVMVFConfig -ConfigType "SmokeTest"
     }
 
     # If driver verifier is true, will not support performance test
@@ -851,14 +845,7 @@ try {
                 Foreach ($VMVFOSConfig in $VMVFOSConfigs) {
                     if (!$CompareFlag) {
                         Win-DebugTimestamp -output ("HVMode: Initialize test environment....")
-                        $ENVConfig = "{0}\\vmconfig\\{1}_{2}.json" -f
-                            $QATTESTPATH,
-                            $LocationInfo.QatType,
-                            $VMVFOSConfig
-
-                        WTW-VMVFInfoInit -VMVFOSConfig $ENVConfig
-                        WTW-ENVInit -configFile $ENVConfig -InitVM $InitVM
-                        [System.Array] $TestVmOpts = (Get-Content $ENVConfig | ConvertFrom-Json).TestVms
+                        WTW-ENVInit -VMVFOSConfig $VMVFOSConfig -InitVM $InitVM | out-null
 
                         Win-DebugTimestamp -output ("HVMode: Start to run test case....")
                     }
@@ -912,7 +899,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $CNGTestResult = WTW-CNGTestBase `
-                                            -TestVmOpts $TestVmOpts `
                                             -algo $CNGtestConfig.Algo `
                                             -operation $CNGtestConfig.Operation `
                                             -provider $CNGtestProvider `
@@ -983,7 +969,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $CNGTestResult = WTW-CNGTestPerformance `
-                                            -TestVmOpts $TestVmOpts `
                                             -algo $CNGtestConfig.Algo `
                                             -operation $CNGtestConfig.Operation `
                                             -provider $CNGtestProvider `
@@ -1092,7 +1077,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $CNGTestResult = WTW-CNGTestSWfallback `
-                                            -TestVmOpts $TestVmOpts `
                                             -algo $CNGtestConfig.Algo `
                                             -operation $CNGtestConfig.Operation `
                                             -provider $CNGtestProvider `
@@ -1158,7 +1142,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $ParcompBaseTestResult = WTW-ParcompBase `
-                                            -TestVmOpts $TestVmOpts `
                                             -deCompressFlag $deCompressFlag `
                                             -CompressProvider $ParcompProvider `
                                             -deCompressProvider $ParcompProvider `
@@ -1213,7 +1196,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $PerformanceTestResult = WTW-ParcompPerformance `
-                                            -TestVmOpts $TestVmOpts `
                                             -deCompressFlag $deCompressFlag `
                                             -CompressProvider $ParcompProvider `
                                             -deCompressProvider $ParcompProvider `
@@ -1293,7 +1275,6 @@ try {
                                             -ResultFile $CompareFile
                                     } else {
                                         $SWFallbackTestResult = WTW-ParcompSWfallback `
-                                            -TestVmOpts $TestVmOpts `
                                             -CompressType $ParcompType `
                                             -CompressProvider $ParcompProvider `
                                             -deCompressProvider $ParcompProvider `
@@ -1356,7 +1337,6 @@ try {
 
                                 if (!$CompareFlag) {
                                     $InstallerCheckTestResult = WTW-InstallerCheckDisable `
-                                        -TestVmOpts $TestVmOpts `
                                         -parcompFlag $parcompFlag `
                                         -cngtestFlag $cngtestFlag `
                                         -BertaResultPath $BertaResultPath

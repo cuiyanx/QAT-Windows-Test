@@ -320,11 +320,14 @@ $global:LocationInfo = [hashtable] @{
     DebugMode = $null
     VerifierMode = $null
     QatType = $null
-    FriendlyName = $null
     BertaResultPath = $null
-    IcpQatName = $null
     WriteLogToConsole = $false
     WriteLogToFile = $false
+    FriendlyName = $null
+    IcpQatName = $null
+    Socket = 0
+    Socket2PF = 0
+    PF2VF = 0
     PF = [hashtable] @{
         Number = 0
         PCI = [System.Array] @()
@@ -336,11 +339,18 @@ $global:LocationInfo = [hashtable] @{
         Number = 0
         DriverPath = $null
         DriverName = $null
+        PFVFList = [hashtable] @{}
     }
     VM = [hashtable] @{
         Number = 0
         OS = $null
         IsWin = $null
+        NameArray = [System.Array] @()
+        ImageName = $null
+        Switch = $null
+        Memory = 0
+        CPU = 0
+        HyperVGeneration = 0
     }
 }
 

@@ -62,19 +62,7 @@ try {
 
     # Special: For All
     if ([String]::IsNullOrEmpty($VMVFOSConfigs)) {
-        if ($LocationInfo.QatType -eq "QAT20") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_8vf_ubuntu2004"
-            )
-        } elseif ($LocationInfo.QatType -eq "QAT17") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_3vf_ubuntu2004"
-            )
-        } elseif ($LocationInfo.QatType -eq "QAT18") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_64vf_ubuntu2004"
-            )
-        }
+        [System.Array]$VMVFOSConfigs = HV-GenerateVMVFConfig -ConfigType "Performance"
     }
 
     Foreach ($VMVFOSConfig in $VMVFOSConfigs) {
@@ -90,17 +78,10 @@ try {
             $VMVFOSConfig
 
         Win-DebugTimestamp -output ("Initialize test environment....")
-        $ENVConfig = "{0}\\vmconfig\\{1}_{2}.json" -f
-            $QATTESTPATH,
-            $LocationInfo.QatType,
-            $VMVFOSConfig
-
-        WTL-VMVFInfoInit -VMVFOSConfig $ENVConfig | out-null
-        WTL-ENVInit -configFile $ENVConfig -InitVM $InitVM| out-null
-        [System.Array] $TestVmOpts = (Get-Content $ENVConfig | ConvertFrom-Json).TestVms
+        WTL-ENVInit -VMVFOSConfig $VMVFOSConfig -InitVM $InitVM| out-null
 
         Win-DebugTimestamp -output ("Start to run test case....")
-        $RunTestResult = WTL-PerformanceSample -TestVmOpts $TestVmOpts
+        $RunTestResult = WTL-PerformanceSample
         $testName = "{0}_Run_Linux_Shell" -f $testNameHeader
         if ($RunTestResult.result) {
             $RunTestResult.result = $TestResultToBerta.Pass
@@ -118,7 +99,7 @@ try {
 
         if ($RunTestResult.result) {
             Win-DebugTimestamp -output ("Start to check test case result....")
-            $TestResultList = WTL-CheckOutput -TestVmOpts $TestVmOpts
+            $TestResultList = WTL-CheckOutput
             Foreach ($TestResult in $TestResultList) {
                 $testName = "{0}_{1}" -f $testNameHeader, $TestResult.name
 

@@ -167,6 +167,150 @@ function HV-PSSessionCheck
     return $ReturnValue
 }
 
+# About VMVFOSConfigs
+function HV-GenerateVMVFConfig
+{
+    Param(
+        [string]$ConfigType = "Base"
+    )
+
+    $ReturnValue = @()
+
+    if ($LocationInfo.VM.IsWin) {
+        if (($ConfigType -eq "SmokeTest") -or ($ConfigType -eq "Stress")) {
+            $VMOSs = ("windows2022")
+        } else {
+            $VMOSs = ("windows2019", "windows2022")
+        }
+    } else {
+        $VMOSs = ("ubuntu2004")
+    }
+
+    Foreach ($VMOS in $VMOSs) {
+        if ($ConfigType -eq "Base") {
+            $VMVFOSName = "3vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
+            $ReturnValue += $VMVFOSName
+
+            $AllVFs = $LocationInfo.PF.Number * $LocationInfo.PF2VF
+            $VMNumber = [Math]::Truncate($AllVFs / 64)
+            if ($VMNumber -gt 2) {$VMNumber = 2}
+            $VMVFOSName = "{0}vm_64vf_{1}" -f $VMNumber, $VMOS
+            $ReturnValue += $VMVFOSName
+        } elseif ($ConfigType -eq "Performance") {
+            $VMVFOSName = "3vm_{0}vf_{1}" -f ($LocationInfo.PF.Number * 2), $VMOS
+            $ReturnValue += $VMVFOSName
+        } elseif ($ConfigType -eq "PerfParameter") {
+            $AllVFs = $LocationInfo.PF.Number * $LocationInfo.PF2VF
+            $VMNumber = [Math]::Truncate($AllVFs / 64)
+            if ($VMNumber -gt 2) {$VMNumber = 2}
+            $VMVFOSName = "{0}vm_64vf_{1}" -f $VMNumber, $VMOS
+            $ReturnValue += $VMVFOSName
+        } elseif ($ConfigType -eq "SmokeTest") {
+            $VMVFOSName = "3vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
+            $ReturnValue += $VMVFOSName
+        } elseif ($ConfigType -eq "Stress") {
+            $VMVFOSName = "12vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
+            $ReturnValue += $VMVFOSName
+        } else {
+            throw ("Can not generate VMVFOS configs > {0}" -f $ConfigType)
+        }
+    }
+
+    return $ReturnValue
+}
+
+function HV-VMVFConfigInit
+{
+    Param(
+        [Parameter(Mandatory=$True)]
+        [string]$VMVFOSConfig
+    )
+
+    $LocationInfo.VM.Number = $null
+    $LocationInfo.VF.Number = $null
+    $LocationInfo.VM.OS = $null
+    $LocationInfo.VM.CPU = 0
+    $LocationInfo.VM.Memory = 0
+    $LocationInfo.VM.HyperVGeneration = 0
+    $LocationInfo.VM.Switch = $null
+    $LocationInfo.VM.ImageName = $null
+    $LocationInfo.VM.NameArray = [System.Array] @()
+    $LocationInfo.VF.PFVFList = [hashtable] @{}
+
+    if ([String]::IsNullOrEmpty($VMVFOSConfig)) {
+        Win-DebugTimestamp -output ("Host: The config of 'VMVFOS' is not null for HV mode")
+    } else {
+        $HostVMs = $VMVFOSConfig.split("_")[0]
+        $LocationInfo.VM.Number = [int]($HostVMs.Substring(0, $HostVMs.Length - 2))
+        $HostVFs = $VMVFOSConfig.split("_")[1]
+        $LocationInfo.VF.Number = [int]($HostVFs.Substring(0, $HostVFs.Length - 2))
+        $LocationInfo.VM.OS = ($VMVFOSConfig.split("_")[2]).split(".")[0]
+        $LocationInfo.VM.CPU = $LocationInfo.VF.Number
+        $LocationInfo.VM.Memory = 32
+        $LocationInfo.VM.HyperVGeneration = 1
+
+        $LocationInfo.VM.Switch = HV-VMSwitchCreate -VMSwitchType "Internal"
+
+        if ($LocationInfo.VM.OS -eq "windows2019") {$LocationInfo.VM.ImageName = "windows_server_2019_19624"}
+        if ($LocationInfo.VM.OS -eq "windows2022") {$LocationInfo.VM.ImageName = "windows_server_2022_20348"}
+        if ($LocationInfo.VM.OS -eq "ubuntu2004") {$LocationInfo.VM.ImageName = "ubuntu_20.04"}
+
+        $VMCountArray = (1..$LocationInfo.VM.Number)
+        $VMCountArray | ForEach-Object {
+            $LocationInfo.VM.NameArray += "vm{0}" -f $_
+        }
+
+        $intPFCount = -1
+        $intVFCount = -1
+        $StartFlag = $true
+        $LocationInfo.VM.NameArray | ForEach-Object {
+            $PFVFArray = @()
+            $VFCount = 0
+            for ($intVF = 0; $intVF -lt $LocationInfo.PF2VF; $intVF++) {
+                for ($intPF = 0; $intPF -lt $LocationInfo.PF.Number; $intPF++) {
+                    if (($intVF -eq $intVFCount) -and ($intPF -eq $intPFCount)) {
+                        $StartFlag = $true
+                        continue
+                    }
+
+                    if ($StartFlag) {
+                        $PFVFArray += [hashtable] @{
+                            PF = $intPF
+                            VF = $intVF
+                        }
+                        $VFCount += 1
+
+                        if ($VFCount -eq $LocationInfo.VF.Number) {
+                            $StartFlag = $false
+                            $intPFCount = $intPF
+                            $intVFCount = $intVF
+                        }
+                    }
+                }
+            }
+
+            $LocationInfo.VF.PFVFList[$_] = $PFVFArray
+        }
+
+        <#
+        $LocationInfo.VM.NameArray | ForEach-Object {
+            write-host ("--------{0}" -f $_)
+            $LocationInfo.VF.PFVFList[$_] | ForEach-Object {
+                write-host ("{0} : {1}" -f $_.PF, $_.VF)
+            }
+        }
+        #>
+
+        Win-DebugTimestamp -output ("      VFNumber : {0}" -f $LocationInfo.VF.Number)
+        Win-DebugTimestamp -output ("      VMNumber : {0}" -f $LocationInfo.VM.Number)
+        Win-DebugTimestamp -output ("          VMOS : {0}" -f $LocationInfo.VM.OS)
+        Win-DebugTimestamp -output ("   VMImageName : {0}" -f $LocationInfo.VM.ImageName)
+        Win-DebugTimestamp -output ("      VMSwitch : {0}" -f $LocationInfo.VM.Switch)
+        Win-DebugTimestamp -output ("      VMMemory : {0}" -f $LocationInfo.VM.Memory)
+        Win-DebugTimestamp -output ("         VMCPU : {0}" -f $LocationInfo.VM.CPU)
+    }
+}
+
 # About VM
 function HV-GetVMIPAddress
 {
@@ -296,36 +440,33 @@ function HV-CreateVM
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [object]$VMConfig,
-
-        [Parameter(Mandatory=$True)]
-        [string]$VMSwitch
+        [string]$VMNameSuffix
     )
 
-    $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $VMConfig.Name)
+    $VMName = ("{0}_{1}" -f $env:COMPUTERNAME, $VMNameSuffix)
     $ParentsVM = "{0}\{1}.vhdx" -f
         $VHDAndTestFiles.ParentsVMPath,
-        $VMConfig.VmType
+        $LocationInfo.VM.ImageName
     $ChildVM = "{0}\\{1}.vhdx" -f $VHDAndTestFiles.ChildVMPath, $VMName
 
     Win-DebugTimestamp -output ("Create new VM named {0}" -f $VMName)
 
     try {
         if ([System.IO.File]::Exists($ParentsVM)) {
-            Win-DebugTimestamp -output ("Use local Vhd file ({0})" -f $VMConfig.VmType)
+            Win-DebugTimestamp -output ("Use local Vhd file ({0})" -f $ParentsVM)
         } else {
             Win-DebugTimestamp -output (
-                "Copy Vhd file ({0}) from remote {1}" -f
-                    $VMConfig.VmType,
+                "Copy Vhd file ({0}.vhdx) from remote {1}" -f
+                    $LocationInfo.VM.ImageName,
                     $VHDAndTestFiles.SourceVMPath
             )
 
-            $BertaSource = "{0}\\{1}" -f
+            $BertaSource = "{0}\\{1}.vhdx" -f
                 $VHDAndTestFiles.SourceVMPath,
-                $VMConfig.VmType
-            $BertaDestination = "{0}\\{1}" -f
+                $LocationInfo.VM.ImageName
+            $BertaDestination = "{0}\\{1}.vhdx" -f
                 $VHDAndTestFiles.ParentsVMPath,
-                $VMConfig.VmType
+                $LocationInfo.VM.ImageName
 
             Copy-Item `
                 -Path $BertaSource `
@@ -344,37 +485,41 @@ function HV-CreateVM
             -Differencing `
             -ErrorAction Stop | out-null
 
-        $vMemory = HVConvertIecUnitToLong -IecValue $VMConfig.VMemory
+        $VMMemory = HVConvertIecUnitToLong -IecValue $LocationInfo.VM.Memory
 
         Win-DebugTimestamp -output (
             "Create new VM instance {0}, {1}, generation {2}" -f
                 $VMName,
-                $vMemory,
-                $VMConfig.HyperVGeneration
+                $VMMemory,
+                $LocationInfo.VM.HyperVGeneration
         )
 
-        $vm = New-VM `
+        New-VM `
             -Name $VMName `
-            -MemoryStartupBytes $vMemory `
+            -MemoryStartupBytes $VMMemory `
             -VHDPath $ChildVM `
-            -Generation $VMConfig.HyperVGeneration `
-            -SwitchName $VMSwitch
+            -Generation $LocationInfo.VM.HyperVGeneration `
+            -SwitchName $LocationInfo.VM.Switch | out-null
 
         Set-VM `
             -Name $VMName `
-            -ProcessorCount $VMConfig.Vcpu `
+            -ProcessorCount $LocationInfo.VM.CPU `
             -AutomaticStopAction TurnOff `
             -ErrorAction Stop | out-null
 
-        if ($VMConfig.HyperVGeneration -eq 2) {
+        if ($LocationInfo.VM.HyperVGeneration -eq 2) {
             Set-VMFirmware `
                 -Name $VMName `
                 -EnableSecureBoot Off `
                 -ErrorAction Stop | out-null
         }
 
-        HV-AssignableDeviceAdd -VMName $VMName -QatVF $VMConfig.QatVF
-        $CheckResult = HV-AssignableDeviceCheck -VMName $VMName -QatVF $VMConfig.QatVF
+        HV-AssignableDeviceAdd `
+            -VMName $VMName `
+            -PFVFArray $LocationInfo.VF.PFVFList[$VMNameSuffix] | out-null
+        $CheckResult = HV-AssignableDeviceCheck `
+            -VMName $VMName `
+            -PFVFArray $LocationInfo.VF.PFVFList[$VMNameSuffix]
         if (-not $CheckResult) {
             throw ("Double check device number is failed")
         }
@@ -549,24 +694,24 @@ function HV-AssignableDeviceAdd
         [string]$VMName,
 
         [Parameter(Mandatory=$True)]
-        [System.Object]$QatVF
+        [array]$PFVFArray
     )
 
     HV-AssignableDeviceRemove -VMName $VMName | out-null
 
-    $QatVF | ForEach-Object {
+    $PFVFArray | ForEach-Object {
         ForEach ($localPath in $LocationInfo.PF.PCI) {
-            if ($localPath[0] -eq $_[0]) {
+            if ($localPath[0] -eq $_.PF) {
                 try {
                     Win-DebugTimestamp -output (
                         "Adding QAT VF with InstancePath {0} and VF# {1}" -f
-                            $localPath[1], $_[1]
+                            $localPath[1], $_.VF
                     )
 
                     Add-VMAssignableDevice `
                         -VMName $VMName `
                         -LocationPath $localPath[1] `
-                        -VirtualFunction $_[1] | out-null
+                        -VirtualFunction $_.VF | out-null
                 } catch {
                     throw ("Error: Assigning qat device > {0}" -f $localPath[1])
                 }
@@ -592,12 +737,12 @@ function HV-AssignableDeviceCheck
         [string]$VMName,
 
         [Parameter(Mandatory=$True)]
-        [System.Object]$QatVF
+        [array]$PFVFArray
     )
 
     $ReturnValue = $true
 
-    $TargetDevNember = $QatVF.Length
+    $TargetDevNember = $PFVFArray.Length
     $CheckDevNember = (Get-VMAssignableDevice -VMName $VMName).Length
     $ReturnValue = ($TargetDevNember -eq $CheckDevNember) ? $true : $false
 

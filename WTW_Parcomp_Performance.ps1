@@ -99,21 +99,7 @@ try {
     $RunIterations = 1
 
     if ([String]::IsNullOrEmpty($VMVFOSConfigs)) {
-        if ($LocationInfo.QatType -eq "QAT20") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_8vf_windows2022",
-                "1vm_8vf_windows2019"
-            )
-        } elseif ($LocationInfo.QatType -eq "QAT17") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_3vf_windows2022"
-            )
-        } elseif ($LocationInfo.QatType -eq "QAT18") {
-            [System.Array]$VMVFOSConfigs = (
-                "1vm_3vf_windows2022",
-                "1vm_3vf_windows2019"
-            )
-        }
+        [System.Array]$VMVFOSConfigs = HV-GenerateVMVFConfig -ConfigType "Performance"
     }
 
     # Special: For QAT17
@@ -178,14 +164,7 @@ try {
 
             if (-not $CompareFlag) {
                 Win-DebugTimestamp -output ("Initialize test environment....")
-                $ENVConfig = "{0}\\vmconfig\\{1}_{2}.json" -f
-                    $QATTESTPATH,
-                    $LocationInfo.QatType,
-                    $VMVFOSConfig
-
-                WTW-VMVFInfoInit -VMVFOSConfig $ENVConfig | out-null
-                WTW-ENVInit -configFile $ENVConfig -InitVM $InitVM | out-null
-                [System.Array] $TestVmOpts = (Get-Content $ENVConfig | ConvertFrom-Json).TestVms
+                WTW-ENVInit -VMVFOSConfig $VMVFOSConfig -InitVM $InitVM | out-null
 
                 Win-DebugTimestamp -output ("Start to run test case....")
             }
@@ -248,7 +227,6 @@ try {
                         )
 
                         $PerformanceTestResult = WTW-ParcompPerformance `
-                            -TestVmOpts $TestVmOpts `
                             -deCompressFlag $deCompressFlag `
                             -CompressProvider $TestCase.Provider `
                             -deCompressProvider $TestCase.Provider `

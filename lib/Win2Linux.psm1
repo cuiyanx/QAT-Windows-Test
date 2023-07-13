@@ -106,14 +106,11 @@ function WTLCreateVMs
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [Array]$TestVmOpts,
-
-        [Parameter(Mandatory=$True)]
-        [string]$VMSwitch
+        [array]$VMNameList
     )
 
-    $TestVmOpts | ForEach-Object {
-        HV-CreateVM -VMConfig $_ -VMSwitch $VMSwitch | out-null
+    $VMNameList | ForEach-Object {
+        HV-CreateVM -VMNameSuffix $_ | out-null
     }
 }
 
@@ -509,57 +506,25 @@ function WTL-CheckDriverInstalled
 }
 
 # About test ENV init
-function WTL-VMVFInfoInit
-{
-    Param(
-        [Parameter(Mandatory=$True)]
-        [string]$VMVFOSConfig
-    )
-
-    $LocationInfo.VM.Number = $null
-    $LocationInfo.VF.Number = $null
-    $LocationInfo.VM.OS = $null
-
-    if ([String]::IsNullOrEmpty($VMVFOSConfig)) {
-        Win-DebugTimestamp -output ("Host: The config of 'VMVFOS' is not null for HV mode")
-    } else {
-        $VMVFOSConfig = Split-Path -Path $VMVFOSConfig -Leaf
-        $HostVMs = $VMVFOSConfig.split("_")[1]
-        $LocationInfo.VM.Number = [int]($HostVMs.Substring(0, $HostVMs.Length - 2))
-        $HostVFs = $VMVFOSConfig.split("_")[2]
-        $LocationInfo.VF.Number = [int]($HostVFs.Substring(0, $HostVFs.Length - 2))
-        $LocationInfo.VM.OS = ($VMVFOSConfig.split("_")[3]).split(".")[0]
-
-        Win-DebugTimestamp -output ("LocationInfo: VMNumber > {0}" -f $LocationInfo.VM.Number)
-        Win-DebugTimestamp -output ("LocationInfo: VFNumber > {0}" -f $LocationInfo.VF.Number)
-        Win-DebugTimestamp -output ("LocationInfo: VMOS > {0}" -f $LocationInfo.VM.OS)
-    }
-}
-
 function WTL-ENVInit
 {
     Param(
         [Parameter(Mandatory=$True)]
-        [string]$configFile,
+        [string]$VMVFOSConfig,
 
-        [bool]$InitVM
+        [bool]$InitVM = $true
     )
 
-    [System.Array] $TestVmOpts = (Get-Content $configFile | ConvertFrom-Json).TestVms
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    HV-VMVFConfigInit -VMVFOSConfig $VMVFOSConfig | out-null
+
+    $VMNameList = $LocationInfo.VM.NameArray
 
     if ($InitVM) {
         # Remove VMs
         WTLRemoveVMs | out-null
 
-        # Create new VM switch or rename existing VM switch.
-        $VMSwitch = HV-VMSwitchCreate
-
         # Create VMs
-        WTLCreateVMs -TestVmOpts $TestVmOpts -VMSwitch $VMSwitch | out-null
+        WTLCreateVMs -VMNameList $VMNameList | out-null
 
         <#
         # Start VMs
@@ -1016,11 +981,6 @@ function WTLCollateTestCaseResult
 
 function WTL-CheckOutput
 {
-    Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts
-    )
-
     #$TestCaseResult = [hashtable] @{
     #    name = $TestName
     #    result = $true
@@ -1030,10 +990,7 @@ function WTL-CheckOutput
     #$ReturnValue = @($TestCaseResult)
     $ReturnValue = @()
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     #$TestCaseList = [hashtable] @{
     #    VM = ""
@@ -1182,20 +1139,12 @@ function WTL-CheckOutput
 # Sample test of Base
 function WTL-BaseSample
 {
-    Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts
-    )
-
     $ReturnValue = [hashtable] @{
         result = $true
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     # Make base sample test
     if ($ReturnValue.result) {
@@ -1295,20 +1244,12 @@ function WTL-BaseSample
 # Sample test of Performance
 function WTL-PerformanceSample
 {
-    Param(
-        [Parameter(Mandatory=$True)]
-        [array]$TestVmOpts
-    )
-
     $ReturnValue = [hashtable] @{
         result = $true
         error = "no_error"
     }
 
-    $VMNameList = @()
-    $TestVmOpts | ForEach-Object {
-        $VMNameList += $_.Name
-    }
+    $VMNameList = $LocationInfo.VM.NameArray
 
     $PerformanceSampleCodeName = "Performance-Sample.tar.gz"
     $PerformanceSampleShellName = "Performance-Sample.txt"

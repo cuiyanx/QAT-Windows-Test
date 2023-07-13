@@ -72,13 +72,7 @@ try {
     $RunCNGtest = $true
 
     if ([String]::IsNullOrEmpty($VMVFOSConfigs)) {
-        if ($LocationInfo.QatType -eq "QAT20") {
-            [System.Array]$VMVFOSConfigs = ("12vm_8vf_windows2022")
-        } elseif ($LocationInfo.QatType -eq "QAT17") {
-            [System.Array]$VMVFOSConfigs = ("12vm_3vf_windows2022")
-        } elseif ($LocationInfo.QatType -eq "QAT18") {
-            [System.Array]$VMVFOSConfigs = ("12vm_3vf_windows2022")
-        }
+        [System.Array]$VMVFOSConfigs = HV-GenerateVMVFConfig -ConfigType "Stress"
     }
 
     # Special: For QAT17
@@ -127,14 +121,7 @@ try {
 
             if (-not $CompareFlag) {
                 Win-DebugTimestamp -output ("Initialize test environment....")
-                $ENVConfig = "{0}\\vmconfig\\{1}_{2}.json" -f
-                    $QATTESTPATH,
-                    $LocationInfo.QatType,
-                    $VMVFOSConfig
-
-                WTW-VMVFInfoInit -VMVFOSConfig $ENVConfig | out-null
-                WTW-ENVInit -configFile $ENVConfig -InitVM $InitVM | out-null
-                [System.Array] $TestVmOpts = (Get-Content $ENVConfig | ConvertFrom-Json).TestVms
+                WTW-ENVInit -VMVFOSConfig $VMVFOSConfig -InitVM $InitVM | out-null
 
                 Win-DebugTimestamp -output ("Start to run test case....")
             }
@@ -155,8 +142,7 @@ try {
                 } else {
                     Win-DebugTimestamp -output ("Start to run stress test > {0}" -f $Iteration)
 
-                    $StressTestResult = WTW-Stress -TestVmOpts $TestVmOpts `
-                                                   -RunParcomp $RunParcomp `
+                    $StressTestResult = WTW-Stress -RunParcomp $RunParcomp `
                                                    -RunCNGtest $RunCNGtest `
                                                    -BertaResultPath $BertaResultPath
 
