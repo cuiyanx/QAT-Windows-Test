@@ -246,7 +246,7 @@ function HV-VMVFConfigInit
         $LocationInfo.VF.Number = [int]($HostVFs.Substring(0, $HostVFs.Length - 2))
         $LocationInfo.VM.OS = ($VMVFOSConfig.split("_")[2]).split(".")[0]
         $LocationInfo.VM.CPU = $LocationInfo.VF.Number
-        $LocationInfo.VM.Memory = 32
+        $LocationInfo.VM.Memory = "32GiB"
         $LocationInfo.VM.HyperVGeneration = 1
 
         $LocationInfo.VM.Switch = HV-VMSwitchCreate -VMSwitchType "Internal"
