@@ -348,7 +348,7 @@ $global:LocationInfo = [hashtable] @{
         NameArray = [System.Array] @()
         ImageName = $null
         Switch = $null
-        Memory = 0
+        Memory = $null
         CPU = 0
         HyperVGeneration = 0
     }

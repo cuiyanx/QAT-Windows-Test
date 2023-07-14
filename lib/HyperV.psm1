@@ -230,7 +230,7 @@ function HV-VMVFConfigInit
     $LocationInfo.VF.Number = $null
     $LocationInfo.VM.OS = $null
     $LocationInfo.VM.CPU = 0
-    $LocationInfo.VM.Memory = 0
+    $LocationInfo.VM.Memory = $null
     $LocationInfo.VM.HyperVGeneration = 0
     $LocationInfo.VM.Switch = $null
     $LocationInfo.VM.ImageName = $null
@@ -246,8 +246,11 @@ function HV-VMVFConfigInit
         $LocationInfo.VF.Number = [int]($HostVFs.Substring(0, $HostVFs.Length - 2))
         $LocationInfo.VM.OS = ($VMVFOSConfig.split("_")[2]).split(".")[0]
         $LocationInfo.VM.CPU = $LocationInfo.VF.Number
-        $LocationInfo.VM.Memory = "32GiB"
         $LocationInfo.VM.HyperVGeneration = 1
+
+        $VMMemory = [Math]::Truncate(96 / $LocationInfo.VM.Number)
+        if ($VMMemory -gt 32) {$VMMemory = 32}
+        $LocationInfo.VM.Memory = "{0}GiB" -f $VMMemory
 
         $LocationInfo.VM.Switch = HV-VMSwitchCreate -VMSwitchType "Internal"
 

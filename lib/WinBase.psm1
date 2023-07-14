@@ -2685,8 +2685,12 @@ function WBase-UpgradeQatDevice
                 -PSName $PSSessionName `
                 -IsWin $LocationInfo.VM.IsWin
 
-            HV-AssignableDeviceAdd -VMName $VMName -QatVF $_.QatVF | out-null
-            $CheckStatus = HV-AssignableDeviceCheck -VMName $VMName -QatVF $_.QatVF
+            HV-AssignableDeviceAdd `
+                -VMName $VMName `
+                -PFVFArray $LocationInfo.VF.PFVFList[$_] | out-null
+            $CheckStatus = HV-AssignableDeviceCheck `
+                -VMName $VMName `
+                -PFVFArray $LocationInfo.VF.PFVFList[$_]
             if (-not $CheckStatus) {
                 if ($ReturnValue) {
                     $ReturnValue = $false
