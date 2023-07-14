@@ -206,7 +206,7 @@ function HV-GenerateVMVFConfig
             $VMVFOSName = "{0}vm_64vf_{1}" -f $VMNumber, $VMOS
             $ReturnValue += $VMVFOSName
         } elseif ($ConfigType -eq "SmokeTest") {
-            $VMVFOSName = "3vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
+            $VMVFOSName = "1vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
             $ReturnValue += $VMVFOSName
         } elseif ($ConfigType -eq "Stress") {
             $VMVFOSName = "12vm_{0}vf_{1}" -f $LocationInfo.PF.Number, $VMOS
@@ -555,6 +555,14 @@ function HV-RemoveVM
                 Win-DebugTimestamp -output ("Removing VM named {0}" -f $VM.Name)
                 Remove-VM -Name $VM.Name -Force -Confirm:$false | out-null
                 Remove-Item -Path $VM.HardDrives.Path -Force -Confirm:$false | out-null
+            }
+        } else {
+            $VMArray = Get-ChildItem -Path $VHDAndTestFiles.ChildVMPath
+            if (-not ([String]::IsNullOrEmpty($VMArray))) {
+                $VMArray | ForEach-Object {
+                    $VMFullPath = "{0}\\{1}" -f $VHDAndTestFiles.ChildVMPath, $_.Name
+                    Remove-Item -Path $VMFullPath -Force -Confirm:$false | out-null
+                }
             }
         }
     }
