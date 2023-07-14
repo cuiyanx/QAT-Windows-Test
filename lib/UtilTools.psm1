@@ -1011,6 +1011,12 @@ function UT-CreateSSHKeys
     }
 
     if (Test-Path -Path $LocalConfig) {
+        $localPath = (pwd).path
+        cd $SSHKeys.Path
+        takeown /f $SSHKeys.ConfigName
+        cacls $SSHKeys.ConfigName /P Administrator:F /E
+        cd $localPath
+
         Remove-Item `
             -Path $LocalConfig `
             -Force `
