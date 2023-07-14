@@ -248,7 +248,9 @@ function HV-VMVFConfigInit
         $LocationInfo.VM.CPU = $LocationInfo.VF.Number
         $LocationInfo.VM.HyperVGeneration = 1
 
-        $VMMemory = [Math]::Truncate(96 / $LocationInfo.VM.Number)
+        $LocalMemory = [int]((Get-CimInstance -ClassName Win32_ComputerSystem).TotalPhysicalMemory /1gb)
+        $LocalMemoryUse = [Math]::Truncate($LocalMemory * 0.75)
+        $VMMemory = [Math]::Truncate($LocalMemoryUse / $LocationInfo.VM.Number)
         if ($VMMemory -gt 32) {$VMMemory = 32}
         $LocationInfo.VM.Memory = "{0}GiB" -f $VMMemory
 
